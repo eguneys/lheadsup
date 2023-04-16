@@ -1,7 +1,37 @@
 import { it, expect } from 'vitest'
 import { Round } from '../src/index'
 
-it('works', () => {
+
+it('permissions', () => {
+
+  let buttons_fen = `10-20 8 1`
+
+  let r00 = Round.make(buttons_fen)
+
+  expect(r00.dests).toBeUndefined()
+
+  let r0 = r00.act('phase')
+  //expect(r0.fen).toBe(`80 90 / 0-0-20-bb 0-0-10-sb@`)
+
+  expect(r0.dests.fen).toBe(`call-10 raise-10-60 allin-90 fold`)
+
+  let r1 = r0.act('call')
+  //expect(r1.fen).toBe(`80 80 / 0-0-20-bb@ 10-10-0-call`)
+  expect(r1.dests.fen).toBe(`check raise-0-60 allin-80 fold`)
+
+
+  let r2 = r1.act('check')
+  //expect(r2.fen).toBe(`80 80 / 20-0-0-check 10-10-0-call`)
+  expect(r2.dests.fen).toBe(`phase`)
+
+  let r3 = r2.act('phase')
+  //expect(r3.fen).toBe(`80 80 / 0@ 0 / 40`)
+
+  expect(r3.dests.fen).toBe(`check raise-0-60 allin-80 fold`)
+})
+
+
+it('call check check check', () => {
 
 
   let buttons_fen = `10-20 8 1`

@@ -4,6 +4,70 @@ export type Side = 1 | 2
 export type Action = string
 export type BetDescription = string
 
+export class Dests {
+
+  static phase = () => new Dests(true)
+  static user = () => new Dests(false)
+
+  constructor(
+    readonly phase?: true,
+    private check?: Bet,
+    private fold?: Bet,
+    private call?: Bet,
+    private raise?: Bet,
+    private allin?: Bet) {}
+
+    get fen() {
+      if (this.phase) {
+        return 'phase'
+      }
+      let res = []
+      let { check, fold, call, raise, allin } = this
+
+      if (check) {
+        res.push(`check`)
+      }
+
+      if (call) {
+        res.push(`call-${call.match}`)
+      }
+
+      if (raise) {
+        res.push(`raise-${raise.match}-${raise.raise}`)
+      }
+
+      if (allin) {
+        res.push(`allin-${allin.match}`)
+      }
+
+      if (fold) {
+        res.push('fold')
+      }
+      return res.join(' ')
+    }
+
+    add_check() {
+      this.check = new Bet('check', 0, undefined, undefined)
+    }
+
+    add_call(to_call: Chips) {
+      this.call = new Bet('call', 0, to_call, undefined)
+    }
+
+
+    add_raise(to_call: Chips, raise: Chips) {
+      this.raise = new Bet('raise', 0, to_call, raise)
+    }
+
+    add_allin(allin: Chips) {
+      this.allin = new Bet('allin', 0, allin, undefined)
+    }
+
+    add_fold() {
+      this.fold = new Bet('fold', 0, undefined)
+    }
+}
+
 export class Bet {
 
   constructor(
@@ -57,6 +121,56 @@ export class Round {
 
   get small_blind_side() {
     return next(this.button)
+  }
+
+  get dests() {
+    if (this.bets) {
+
+      if (!this.action) {
+        return Dests.phase()
+      }
+
+      let my_stack = this.stacks[this.action! - 1]
+      let my_bet = this.bets![this.action! - 1]
+      let op_bet = this.bets![next(this.action!) - 1]
+
+      let res = Dests.user()
+
+      if (op_bet) {
+        let to_call = op_bet.total - my_bet.total
+
+        if (to_call > 0) {
+          res.add_call(to_call)
+        }
+
+        if (to_call === 0) {
+          res.add_check()
+        }
+
+        let raise = my_stack - to_call - this.big_blind
+
+        if (raise > 0) {
+          res.add_raise(to_call, raise)
+        }
+      } else {
+        res.add_check()
+
+        let to_call = 0
+        let raise = my_stack - to_call - this.big_blind
+
+        if (raise > 0) {
+          res.add_raise(to_call, raise)
+        }
+
+      }
+
+      let allin = my_stack
+
+      res.add_allin(allin)
+      res.add_fold()
+
+      return res
+    }
   }
 
   get fen() {
