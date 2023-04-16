@@ -16,7 +16,7 @@ export class PotDistribution {
 
     if (win) {
       let [side, pot] = win.split('-').map(_ => parseInt(_))
-      return new PotDistribution(undefined, [side, pot])
+      return new PotDistribution(undefined, [side as Side, pot])
     }
     if (show) {
       return new PotDistribution(parseInt(show))
@@ -108,7 +108,12 @@ export class Bet {
     if (fen === '0') {
       return undefined
     }
-    let [previous, match, raise, desc] = fen.split('-')
+    let [_previous, _match, _raise, desc] = fen.split('-')
+
+    let previous = parseInt(_previous)
+    let match = _match !== undefined ? parseInt(_match) : undefined
+    let raise = _raise !== undefined ? parseInt(_raise) : undefined
+
     return new Bet(desc, previous, match, raise)
   }
 
@@ -140,7 +145,7 @@ export class Round {
 
     let [stacks_fen, ...rest] = round_fen.split(' / ')
 
-    let stacks = stacks_fen.split(' ').map(_ => parseInt(_))
+    let stacks: [Chips, Chips] = stacks_fen.split(' ').map(_ => parseInt(_)) as [Chips, Chips]
 
 
 
@@ -232,7 +237,9 @@ export class Round {
         let raise = my_stack - to_call - this.big_blind
 
         if (raise > 0) {
-          res.add_raise(to_call, raise)
+          if (op_bet.desc !== 'allin') {
+            res.add_raise(to_call, raise)
+          }
         }
       } else {
         res.add_check()
@@ -248,10 +255,18 @@ export class Round {
 
       let allin = my_stack
 
-      res.add_allin(allin)
+      let damage_to_stack = (op_bet?.total ?? 0) - (my_bet?.total ?? 0)
+      if (op_bet?.desc === 'allin' && damage_to_stack < allin) {
+      } else {
+        res.add_allin(allin)
+      }
       res.add_fold()
 
       return res
+    } else {
+      if (!this.distribution) {
+        return Dests.phase()
+      }
     }
   }
 
@@ -303,8 +318,14 @@ export class Round {
         if (!this.bets) {
           this.bets = [undefined, undefined]
 
+          let big_stack = this.stacks[this.big_blind_side - 1]
+
           let bb = new Bet('bb', 0, 0, this.big_blind)
           let sb = new Bet('sb', 0, 0, this.small_blind)
+
+          if (big_stack === this.big_blind) {
+            bb = new Bet('allin', 0, 0, this.big_blind)
+          }
 
           this.post_bet(this.big_blind_side, bb)
           this.post_bet(this.small_blind_side, sb)
@@ -429,6 +450,11 @@ export class Round {
 
         let allin = my_stack - match
 
+        if (allin < 0) {
+          match = my_stack
+          allin = 0
+        }
+
         let allin_bet = new Bet('allin', previous, match, allin)
 
 
@@ -437,7 +463,7 @@ export class Round {
 
         if (this.bets![0] !== undefined && 
             this.bets![1] !== undefined &&
-            this.bets![0].total === this.bets![1].total) {
+            this.bets![0].desc === 'allin' && this.bets![1].desc === 'allin') {
           this.action = undefined
         } else {
           this.action = next(this.action!)
