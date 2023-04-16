@@ -6,8 +6,8 @@ export type BetDescription = string
 
 export class PotDistribution {
 
-  static show = (pot: Chips) => new PotDistribution(pot)
-  static win = (side: Side, pot: Chips) => new PotDistribution(undefined, [side, pot])
+  static show = (pot: Chips, back?: [Side, Chips]) => new PotDistribution(pot, undefined, back)
+  static win = (win: [Side, Chips], back?: [Side, Chips]) => new PotDistribution(undefined, win, back)
 
   static from_fen = (fen: string) => {
 
@@ -25,14 +25,19 @@ export class PotDistribution {
 
   constructor(
     readonly show?: Chips,
-    readonly win?: [Side, Chips]) {}
+    readonly win?: [Side, Chips],
+    readonly back?: [Side, Chips]) {}
 
 
   get fen() {
+    let back
+    if (this.back) {
+      back = this.back.join('-')
+    }
     if (this.show !== undefined) {
-      return `show-${this.show}`
+      return back ? `show-${this.show} ${back}` : `show-${this.show}`
     } else if (this.win !== undefined) {
-      return `win-${this.win.join('-')}`
+      return back ? `win-${this.win.join('-')} ${back}` : `win-${this.win.join('-')}`
     }
   }
 }
@@ -347,10 +352,19 @@ export class Round {
                   (this.bets.findIndex(_ => _?.desc === 'fold') + 1) as Side)
 
                 this.bets = undefined
-                this.distribution = PotDistribution.win(winner, dpot)
+                this.distribution = PotDistribution.win([winner, dpot])
               } else if (!!this.bets.find(_ => _?.desc === 'allin')) {
+
+                let back
+                if (this.bets[0].total < this.bets[1].total) {
+
+                  back = [2, this.bets[1].total - this.bets[0].total]
+                } else if (this.bets[1].total < this.bets[0].total) {
+                  back = [1, this.bets[0].total - this.bets[1].total]
+                }
+
                 this.bets = undefined
-                this.distribution = PotDistribution.show(dpot)
+                this.distribution = PotDistribution.show(dpot, back)
               } else {
                 this.bets = [undefined, undefined]
                 this.action = this.button
@@ -366,10 +380,18 @@ export class Round {
                   (this.bets.findIndex(_ => _?.desc === 'fold') + 1) as Side)
 
                 this.bets = undefined
-                this.distribution = PotDistribution.win(winner, dpot)
+                this.distribution = PotDistribution.win([winner, dpot])
               } else if (!!this.bets.find(_ => _?.desc === 'allin')) {
+                let back
+                if (this.bets[0].total < this.bets[1].total) {
+
+                  back = [2, this.bets[1].total - this.bets[0].total]
+                } else if (this.bets[1].total < this.bets[0].total) {
+                  back = [1, this.bets[0].total - this.bets[1].total]
+                }
+
                 this.bets = undefined
-                this.distribution = PotDistribution.show(dpot)
+                this.distribution = PotDistribution.show(dpot, back)
               } else if (this.pot.length === 4) {
                 this.bets = undefined
                 this.distribution = PotDistribution.show(dpot)

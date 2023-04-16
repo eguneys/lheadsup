@@ -20,7 +20,6 @@ it('allin blinds', () => {
   expect(r20.dests.fen).toBe('allin-10 fold')
   r20.act('allin')
   expect(r20.fen).toBe(`80 0 / 0-0-20-bb@ 10-10-0-allin`)
-
 })
 
 it('allin less call', () => {
@@ -35,6 +34,10 @@ it('allin less call', () => {
 
   r0.act('allin')
   expect(r0.fen).toBe(`0 0 / 20-80-0-allin 10-10-180-allin`)
+  expect(r0.dests.fen).toBe('phase')
+  r0.act('phase')
+
+  expect(r0.fen).toBe(`0 0 / show-300 2-100`)
 
 })
 
