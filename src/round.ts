@@ -7,7 +7,7 @@ export type BetDescription = string
 export class Dests {
 
   static phase = () => new Dests(true)
-  static user = () => new Dests(false)
+  static user = () => new Dests(undefined)
 
   constructor(
     readonly phase?: true,
@@ -137,9 +137,10 @@ export class Round {
       let res = Dests.user()
 
       if (op_bet) {
-        let to_call = op_bet.total - my_bet.total
+        let to_call = op_bet.total - (my_bet?.total ?? 0)
+        let stack_after_call = my_stack - to_call
 
-        if (to_call > 0) {
+        if (to_call > 0 && stack_after_call > 0) {
           res.add_call(to_call)
         }
 
@@ -215,7 +216,7 @@ export class Round {
   }
 
 
-  act(action: Action) {
+  act(action: Action, raise?: Chips) {
 
     switch (action) {
       case 'phase': {
@@ -235,14 +236,22 @@ export class Round {
 
             let pot = this.bets.map(_ => _!.total).reduce((a, b) => a + b)
             if (!this.pot) {
+
               this.pot = [pot]
-              this.bets = [undefined, undefined]
-              this.action = this.button
+
+              if (!!this.bets.find(_ => _?.desc === 'allin')) {
+                this.bets = undefined
+              } else {
+                this.bets = [undefined, undefined]
+                this.action = this.button
+              }
             } else {
 
               this.pot = [...this.pot, pot]
 
-              if (this.pot.length === 4) {
+              if (!!this.bets.find(_ => _?.desc === 'allin')) {
+                this.bets = undefined
+              } else if (this.pot.length === 4) {
                 this.bets = undefined
               } else {
                 this.bets = [undefined, undefined]
@@ -265,7 +274,17 @@ export class Round {
 
         this.post_bet(this.action!, call)
 
-        this.action = next(this.action!)
+        if (this.bets![0] !== undefined && 
+            this.bets![1] !== undefined &&
+            this.bets![0].total === this.bets![1].total &&
+            this.bets![0].desc !== 'bb' && this.bets![1].desc !== 'bb'
+           ) {
+          this.action = undefined
+        } else {
+          this.action = next(this.action!)
+        }
+
+
       } break
       case 'check': {
         let my_bet = this.bets![this.action! - 1]
@@ -273,6 +292,48 @@ export class Round {
         let check = new Bet('check', previous, 0, 0)
 
         this.post_bet(this.action!, check)
+
+
+        if (this.bets![0] !== undefined && 
+            this.bets![1] !== undefined &&
+            this.bets![0].total === this.bets![1].total) {
+          this.action = undefined
+        } else {
+          this.action = next(this.action!)
+        }
+      } break
+      case 'raise': {
+
+        let op_bet = this.bets![next(this.action!) - 1]!
+        let my_bet = this.bets![this.action! - 1]!
+
+        let previous = my_bet.total
+        let match = op_bet.total - my_bet.total
+
+        let raise_bet = new Bet('raise', previous, match, raise)
+
+
+        this.post_bet(this.action!, raise_bet)
+
+        this.action = next(this.action!)
+      }
+      break
+      case 'allin': {
+
+        let my_stack = this.stacks[this.action! - 1]
+
+        let op_bet = this.bets![next(this.action!) - 1]
+        let my_bet = this.bets![this.action! - 1]
+
+        let previous = my_bet?.total ?? 0
+        let match = (op_bet?.total ?? 0) - (my_bet?.total ?? 0)
+
+        let allin = my_stack - match
+
+        let allin_bet = new Bet('allin', previous, match, allin)
+
+
+        this.post_bet(this.action!, allin_bet)
 
 
         if (this.bets![0] !== undefined && 
