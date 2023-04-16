@@ -355,12 +355,12 @@ export class Round {
                 this.distribution = PotDistribution.win([winner, dpot])
               } else if (!!this.bets.find(_ => _?.desc === 'allin')) {
 
-                let back
-                if (this.bets[0].total < this.bets[1].total) {
+                let back: [Side, Chips] | undefined
+                if (this.bets[0]!.total < this.bets[1]!.total) {
 
-                  back = [2, this.bets[1].total - this.bets[0].total]
-                } else if (this.bets[1].total < this.bets[0].total) {
-                  back = [1, this.bets[0].total - this.bets[1].total]
+                  back = [2, this.bets[1]!.total - this.bets[0]!.total]
+                } else if (this.bets[1]!.total < this.bets[0]!.total) {
+                  back = [1, this.bets[0]!.total - this.bets[1]!.total]
                 }
 
                 this.bets = undefined
@@ -382,12 +382,12 @@ export class Round {
                 this.bets = undefined
                 this.distribution = PotDistribution.win([winner, dpot])
               } else if (!!this.bets.find(_ => _?.desc === 'allin')) {
-                let back
-                if (this.bets[0].total < this.bets[1].total) {
+                let back: [Side, Chips] | undefined
+                if (this.bets[0]!.total < this.bets[1]!.total) {
 
-                  back = [2, this.bets[1].total - this.bets[0].total]
-                } else if (this.bets[1].total < this.bets[0].total) {
-                  back = [1, this.bets[0].total - this.bets[1].total]
+                  back = [2, this.bets[1]!.total - this.bets[0]!.total]
+                } else if (this.bets[1]!.total < this.bets[0]!.total) {
+                  back = [1, this.bets[0]!.total - this.bets[1]!.total]
                 }
 
                 this.bets = undefined

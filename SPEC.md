@@ -1,4 +1,4 @@
-### Texas Hold'em Poker Headsup Game
+## Texas Hold'em Poker Headsup 
 
 2 Player table game played with cards and chips. Players are dealt cards making their hand, and bet chips into a pot, considering the strength of their hands, and eventually win the pot.
 Each player starts with some chips, called their stack.
@@ -26,8 +26,8 @@ After flop, the next phase, the turn, begins by dealing 1 card in the middle cal
 After turn, the final phase, the river, begins by dealing 1 card in the middle called the river.
 After river, is the showdown, where the players reveals their cards and the pot is distributed. The strongest hand wins the pot or if it's a tie they share the pot.
 
-If in any phase a player folds, the other player is the winner without showdown, and wins the pot.
-If in any phase a player is all-in, if all-in player's bet is less than or equal to the pot, game goes to showdown, if all-in player's bet is greater than the pot, action goes to the next player, where he is facing a raise. After that, game goes to showdown.
+If in any phase, a player folds, the other player is the winner without showdown, and wins the pot.
+If in any phase, a player is all-in, if all-in player's bet is less than or equal to the pot, game goes to showdown, if all-in player's bet is greater than the pot, action goes to the next player, where he is facing a raise. After that, game goes to showdown.
 
 After the pot is distributed, the round is over. If a player has lost all their chips the game is over, otherwise the next round starts.
 
