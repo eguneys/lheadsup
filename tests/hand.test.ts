@@ -7,6 +7,8 @@ it('works', () => {
   expect(hand.fen).toBe(`2c Ts 7h Kd 5d 9c 3s 6h Qh`)
   expect(hand.hand(1).join(' ')).toBe(`2c Ts 7h Kd 5d 9c 3s`)
   expect(hand.hand(2).join(' ')).toBe(`2c Ts 7h Kd 5d 6h Qh`)
+  expect(hand.hand_rank(1).fen).toBe(`high K T 9 7 5`)
+  expect(hand.hand_rank(2).fen).toBe(`high K Q T 7 6`)
 
   expect(hand.pov(1).fen).toBe(`9c 3s`)
   expect(hand.pov(2).fen).toBe(`6h Qh`)
@@ -26,5 +28,9 @@ it('works', () => {
 
   hand.reveal('show')
   expect(hand.pov(1).fen).toBe(`9c 3s 2c Ts 7h Kd 5d 6h Qh`)
-  expect(hand.pov(2).fen).toBe(`6h Qh 2c Ts 7h Kd 5d 9c 3s`)
+  expect(hand.pov(1).my_hand_rank.fen).toBe(`high K T 9 7 5`)
+  expect(hand.pov(1).op_hand_rank.fen).toBe(`high K Q T 7 6`)
+  expect(hand.pov(2).fen).toBe(`6h Qh 2c Ts 7h Kd 5d 9c 3s`) 
+  expect(hand.pov(2).my_hand_rank.fen).toBe(`high K Q T 7 6`)
+  expect(hand.pov(2).op_hand_rank.fen).toBe(`high K T 9 7 5`)
 })

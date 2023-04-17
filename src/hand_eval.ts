@@ -6,15 +6,15 @@ const Rank5 = Rank4 * 20
 const Rank6 = Rank5 * 20
 
 export const HandEvalFunctions = {
-  high: (a, b, c, d, e) => Rank6 * 0 + Rank5 * a + Rank4 * b + Rank3 * c + Rank2 * d + e,
-  pair: (a, b, c, d) => Rank6 * 1 + Rank4 * a + Rank3 * b + Rank2 * c + d,
-  pair2: (a, b, c) => Rank6 * 2 + Rank3 * a + Rank2 * b + c,
-  set: (a, b, c) => Rank6 * 3 + Rank3 * a + Rank2 * b + c,
-  full: (a, b) => Rank6 * 4 + Rank2 * a + b,
-  straight: (a) => Rank6 * 5 + a,
-  flush: (a) => Rank6 * 6 + a,
-  quad: (a) => Rank6 * 7 + a,
-  sflush: (a) => Rank6 * 8 + a,
+  high: (a: number, b: number, c: number, d: number, e: number) => Rank6 * 0 + Rank5 * a + Rank4 * b + Rank3 * c + Rank2 * d + e,
+  pair: (a: number, b: number, c: number, d: number) => Rank6 * 1 + Rank4 * a + Rank3 * b + Rank2 * c + d,
+  pair2: (a: number, b: number, c: number) => Rank6 * 2 + Rank3 * a + Rank2 * b + c,
+  set: (a: number, b: number, c: number) => Rank6 * 3 + Rank3 * a + Rank2 * b + c,
+  full: (a: number, b: number) => Rank6 * 4 + Rank2 * a + b,
+  straight: (a: number) => Rank6 * 5 + a,
+  flush: (a: number) => Rank6 * 6 + a,
+  quad: (a: number) => Rank6 * 7 + a,
+  sflush: (a: number) => Rank6 * 8 + a,
 }
 
 export type Card = string
@@ -25,15 +25,15 @@ export class HandRank {
 
     switch (high) {
       case 'high':
-        return HandRank.high(rest)
+        return HandRank.high(rest as [Card, Card, Card, Card, Card])
       case 'pair':
-        return HandRank.pair(rest)
+        return HandRank.pair(rest as [Card, Card, Card, Card])
       case 'pair2':
-        return HandRank.pair2(rest)
+        return HandRank.pair2(rest as [Card, Card, Card])
       case 'set':
-        return HandRank.set(rest)
+        return HandRank.set(rest as [Card, Card, Card])
       case 'full':
-        return HandRank.full(rest)
+        return HandRank.full(rest as [Card, Card])
       case 'straight':
         return HandRank.straight(rest[0])
       case 'flush':
@@ -45,15 +45,15 @@ export class HandRank {
     }
   }
 
-  static quad = quad => new HandRank(quad)
-  static high = high => new HandRank(undefined, high)
-  static pair = pair => new HandRank(undefined, undefined, pair)
-  static pair2 = pair2 => new HandRank(undefined, undefined, undefined, pair2)
-  static set = set => new HandRank(undefined, undefined, undefined, undefined, set)
-  static full = full => new HandRank(undefined, undefined, undefined, undefined, undefined, full)
-  static straight = straight => new HandRank(undefined, undefined, undefined, undefined, undefined, undefined, straight)
-  static flush = flush => new HandRank(undefined, undefined, undefined, undefined, undefined, undefined, undefined, flush)
-  static sflush = sflush => new HandRank(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, sflush)
+  static quad = (quad: Card) => new HandRank(quad)
+  static high = (high: [Card, Card, Card, Card, Card]) => new HandRank(undefined, high)
+  static pair = (pair: [Card, Card, Card, Card]) => new HandRank(undefined, undefined, pair)
+  static pair2 = (pair2: [Card, Card, Card]) => new HandRank(undefined, undefined, undefined, pair2)
+  static set = (set: [Card, Card, Card]) => new HandRank(undefined, undefined, undefined, undefined, set)
+  static full = (full: [Card, Card]) => new HandRank(undefined, undefined, undefined, undefined, undefined, full)
+  static straight = (straight: Card) => new HandRank(undefined, undefined, undefined, undefined, undefined, undefined, straight)
+  static flush = (flush: Card) => new HandRank(undefined, undefined, undefined, undefined, undefined, undefined, undefined, flush)
+  static sflush = (sflush: Card) => new HandRank(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, sflush)
 
   constructor(public quad?: Card, 
               public high?: [Card, Card, Card, Card, Card],
@@ -98,7 +98,7 @@ export class HandRank {
     }
   }
 
-  get eval() {
+  get hand_eval() {
     return rank_eval(this)
   }
 }
@@ -138,12 +138,12 @@ export function rank_eval(rank: HandRank) {
   else return 0
 }
 
-const sort_higher = (a, b) => card_rank(b) - card_rank(a)
-const sort_higher_card = (a, b) => card_rank(b[0]) - card_rank(a[0])
+const sort_higher = (a: string, b: string) => card_rank(b) - card_rank(a)
+const sort_higher_card = (a: string, b: string) => card_rank(b[0]) - card_rank(a[0])
 
-export function rank5(hand: Array<Card>): HandRank {
+export function rank5(hand: [Card, Card, Card, Card, Card]): HandRank {
 
-  const rankCount: any = {}
+  const rankCount: { [_: string]: number } = {}
   for (const card of hand) {
     rankCount[card[0]] = (rankCount[card[0]] || 0) + 1
   }
@@ -170,7 +170,7 @@ export function rank5(hand: Array<Card>): HandRank {
     }
 
     if (count === 2 && count2 === 2 && count3 === 1) {
-      return HandRank.pair2([...[high, high2].sort(sort_higher), high3])
+      return HandRank.pair2([...[high, high2].sort(sort_higher), high3] as [Card, Card, Card])
     }
   }
 
@@ -181,7 +181,7 @@ export function rank5(hand: Array<Card>): HandRank {
     let [high4, count4] = histogram[3]
 
 
-    return HandRank.pair([high, high2, high3, high4].sort(sort_higher))
+    return HandRank.pair([high, high2, high3, high4].sort(sort_higher) as [Card, Card, Card, Card])
   }
 
   let is_flush = hand.every(_ => _[1] === hand[0][1])
@@ -216,12 +216,12 @@ export function rank5(hand: Array<Card>): HandRank {
   }
 
 
-  return HandRank.high(hand.map(_ => _[0]))
+  return HandRank.high(hand.map(_ => _[0]) as [Card, Card, Card, Card, Card])
 }
 
 export function hand_rank(hand: Array<Card>): HandRank {
   if (hand.length === 5) {
-    return rank5(hand)
+    return rank5(hand as [Card, Card, Card, Card, Card])
   }
 
   return [...hand.keys()]

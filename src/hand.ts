@@ -1,4 +1,5 @@
-import { next } from './round'
+import { Side, next } from './round'
+import { Card, hand_rank } from './hand_eval'
 
 export class Hand {
   static from_fen = (fen: string) => {
@@ -15,7 +16,7 @@ export class Hand {
     private reveal_flop?: true,
     private reveal_turn?: true,
     private reveal_river?: true,
-    private reveal_opponent?: true
+    private reveal_show?: true
   ) {}
 
   get fen() {
@@ -24,6 +25,10 @@ export class Hand {
     let [hand1, hand2] = this.hands
 
     return `${flop} ${turn} ${river} ${hand1.join(' ')} ${hand2.join(' ')}`
+  }
+
+  hand_rank(side: Side) {
+    return hand_rank(this.hand(side))
   }
 
   hand(side: Side) {
@@ -38,8 +43,8 @@ export class Hand {
     let flop = this.reveal_flop ? this.flop : undefined
     let turn = this.reveal_turn ? this.turn : undefined
     let river = this.reveal_river ? this.river : undefined
-    let opponent = this.reveal_opponent ? opponent_hand : undefined
-    return new HandPov(hand, flop, turn, river, opponent)
+    let show = this.reveal_show ? opponent_hand : undefined
+    return new HandPov(hand, flop, turn, river, show)
   }
 
   reveal(flop: string) {
@@ -54,7 +59,7 @@ export class Hand {
         this.reveal_river = true
       break
       case 'show':
-        this.reveal_opponent = true
+        this.reveal_show = true
       break
     }
   }
@@ -70,6 +75,17 @@ export class HandPov {
     public river?: Card,
     public opponent?: [Card, Card]) {}
 
+
+  get my_hand_rank() {
+    if (this.flop && this.turn && this.river) {
+      return hand_rank([...this.hand, ...this.flop, this.turn, this.river])
+    }
+  }
+  get op_hand_rank() {
+    if (this.flop && this.turn && this.river && this.opponent) {
+      return hand_rank([...this.opponent, ...this.flop, this.turn, this.river])
+    }
+  }
 
   get fen() {
     let res = `${this.hand.join(' ')}`

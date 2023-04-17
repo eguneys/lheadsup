@@ -59,6 +59,7 @@ it('folds uneven stack', () => {
 
 it('imports fen', () => {
   let fens = [
+    `0 0 / show-300 2-100`,
     `80 80 / show-40`,
     `80 80 / win-2-40`,
     `80 90 / win-1-30`,

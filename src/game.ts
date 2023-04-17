@@ -1,5 +1,87 @@
 import { next, Round, Chips, Side } from './round'
+import { Hand } from './hand'
+import { HandRank } from './hand_eval'
 
+export type ShareDescription = string
+
+export class PotShare {
+
+  static win = (side: Side, chips: Chips) => {
+    return new PotShare('win', side, chips)
+  }
+
+  static win_show = (side: Side, chips: Chips, hand_rank: HandRank) => {
+    return new PotShare('winshow', side, chips, hand_rank)
+  }
+
+  static tie_show = (side: Side, chips: Chips, hand_rank: HandRank) => {
+    return new PotShare('tieshow', side, chips, hand_rank)
+  }
+
+  static back = (side: Side, chips: Chips) => {
+    return new PotShare('back', side, chips)
+  }
+
+
+
+  constructor(
+    readonly desc: ShareDescription,
+    readonly side: Side,
+    readonly chips: Chips,
+    readonly hand_rank?: HandRank
+  ) {}
+}
+
+export class GameDeal {
+  constructor(
+    readonly round: Round,
+    readonly hand: Hand,
+    public distribution?: PotShare[]) {}
+
+
+  add_share() {
+    let res = []
+
+    let { distribution } = this.round
+
+    let back_show = 0
+
+    if (distribution!.back) {
+      let [side, chips] = distribution!.back
+
+      res.push(PotShare.back(side, chips))
+      back_show = chips
+    }
+
+    if (distribution!.win) {
+      let [side, chips] = distribution!.win
+
+      res.push(PotShare.win(side, chips))
+    } else if (distribution!.show) {
+
+      let show = distribution!.show - back_show
+
+      let rank1 = this.hand.hand_rank(1)
+      let rank2 = this.hand.hand_rank(2)
+
+      if (rank1.hand_eval > rank2.hand_eval) {
+        res.push(PotShare.win_show(1, show, rank1))
+      } else if (rank1.hand_eval < rank2.hand_eval) {
+        res.push(PotShare.win_show(2, show, rank2))
+      } else {
+        res.push(PotShare.tie_show(1, show / 2, rank1))
+        res.push(PotShare.tie_show(2, show / 2, rank2))
+      }
+    }
+
+    this.distribution = res
+  }
+
+  get stacks() {
+    return this.round.stacks
+  }
+  
+}
 
 export type GameAction = string
 
@@ -18,7 +100,7 @@ export class Game {
     public small_blind: Chips,
     public button: Side,
     public stacks: [Chips, Chips],
-    public deal?: true) {}
+    public deal?: GameDeal) {}
 
   get big_blind() {
     return this.small_blind * 2
@@ -42,42 +124,42 @@ export class Game {
 
   get dests() {
     if (this.deal) {
-      return 'dist'
+      if (this.deal.distribution) {
+        return 'dist'
+      } else if (this.deal.round.distribution) {
+        return 'share'
+      }
     } else {
       return 'deal'
     }
   }
 
 
-  act(action: GameAction, dist?: Round) {
-    switch (action) {
-      case 'deal': {
+  add_deal(hand: Hand) {
+    let round = Round.from_game(this)
 
-        this.deal = true
-
-        return Round.from_game(this)
-      } break
-      case 'dist': {
-        this.deal = undefined
-
-        let { win, show, back } = dist!.distribution!
-
-
-        if (win) {
-          let [side, chips] = win
-          let stacks: [Chips, Chips] = [...dist!.stacks]
-          stacks[side - 1] += chips
-
-          this.stacks = stacks
-
-          this.button = next(this.button)
-        }
-
-      } break
-    }
+    this.deal = new GameDeal(round, hand)
   }
 
-  blinds(blinds: Chips) {
+  add_share() {
+    this.deal!.add_share()
+  }
+
+  add_dist() {
+
+    let { distribution } = this.deal!
+
+    let stacks: [Chips, Chips] = [...this.deal!.stacks]
+    distribution!.forEach(dist => {
+      stacks[dist.side - 1] += dist.chips
+    })
+
+    this.button = next(this.button)
+    this.stacks = stacks
+    this.deal = undefined
+  }
+
+  add_blinds(blinds: Chips) {
     this.small_blind = blinds
   }
 

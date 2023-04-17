@@ -13,15 +13,22 @@ export class PotDistribution {
 
   static from_fen = (fen: string) => {
 
-    let win = fen.split('win-')[1]
-    let show = fen.split('show-')[1]
+    let [winshow, back_fen] = fen.split(' ')
+
+    let win = winshow.split('win-')[1]
+    let show = winshow.split('show-')[1]
+
+    let back
+    if (back_fen) {
+      back = back_fen.split('-').map(_ => parseInt(_))
+    }
 
     if (win) {
       let [side, pot] = win.split('-').map(_ => parseInt(_))
-      return new PotDistribution(undefined, [side as Side, pot])
+      return new PotDistribution(undefined, [side as Side, pot], back)
     }
     if (show) {
-      return new PotDistribution(parseInt(show))
+      return new PotDistribution(parseInt(show), undefined, back)
     }
   }
 
