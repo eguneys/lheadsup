@@ -1,3 +1,5 @@
+import { Game } from './game'
+
 export type Chips = number
 export type Side = 1 | 2
 
@@ -142,7 +144,7 @@ export class Bet {
   }
 }
 
-const next = (a: Side) => a === 1 ? 2 : 1
+export const next = (a: Side) => a === 1 ? 2 : 1
 
 export class Round {
 
@@ -182,6 +184,11 @@ export class Round {
     return new Round(blinds, button, stacks, pot, bets, action, distribution)
   }
 
+  static from_game = (game: Game) => {
+    let { small_blind, button, stacks } = game
+
+    return new Round(small_blind, button, stacks, undefined, undefined, undefined, undefined)
+  }
 
   static make = (buttons_fen: string) => {
 
@@ -199,7 +206,7 @@ export class Round {
     private pot?: Chips[],
     private bets?: [Bet | undefined, Bet | undefined],
     private action?: Side,
-    private distribution?: PotDistribution
+    public distribution?: PotDistribution
   ) {}
 
   get big_blind() {

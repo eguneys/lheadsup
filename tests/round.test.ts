@@ -1,5 +1,5 @@
 import { it, expect } from 'vitest'
-import { Round } from '../src/index'
+import { Round } from '../src'
 
 it('allin blinds', () => {
   let r0 = Round.from_fen(10, 1, `20 100`)
