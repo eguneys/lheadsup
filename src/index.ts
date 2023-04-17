@@ -1,3 +1,3 @@
 export * from './round'
 export * from './game'
-export * from './hand'
+export * from './hand_eval'

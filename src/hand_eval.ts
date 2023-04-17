@@ -1,7 +1,3 @@
-export class Hand {
-
-}
-
 
 const Rank2 = 20
 const Rank3 = Rank2 * 20
@@ -190,18 +186,29 @@ export function rank5(hand: Array<Card>): HandRank {
 
   let is_flush = hand.every(_ => _[1] === hand[0][1])
 
+  let is_wheel = false
   let is_straight = false
   hand.sort(sort_higher_card)
   let top = hand[0], bottom = hand[4]
   if (card_rank(top[0]) - card_rank(bottom[0]) === 4) {
     is_straight = true
   }
+
+  if (top[0] === 'A' && hand[1][0] === '5') {
+    is_straight = true
+    is_wheel = true
+  }
+
   if (is_straight && is_flush) {
     return HandRank.sflush(top[0])
   }
 
   if (is_straight) {
-    return HandRank.straight(top[0])
+    if (is_wheel) {
+      return HandRank.straight(hand[1][0])
+    } else {
+      return HandRank.straight(top[0])
+    }
   }
 
   if (is_flush) {
