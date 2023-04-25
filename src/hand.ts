@@ -68,6 +68,23 @@ export class Hand {
 
 export class HandPov {
 
+  static from_fen = (fen: string) => {
+    let [a1, a2, f1, f2, f3, t, r, b1, b2] = fen.split(' ')
+
+    let f, o
+
+    if (f1 && f2 && f3) {
+      f = [f1, f2, f3]
+    }
+    if (b1 && b2) {
+      o = [b1, b2]
+    }
+
+    return new HandPov([a1, a2], f, t, r, o)
+  }
+
+
+
   constructor(
     public hand: [Card, Card],
     public flop?: [Card, Card, Card],
