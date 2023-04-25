@@ -65,6 +65,13 @@ export class Hand {
   }
 }
 
+/* https://stackoverflow.com/questions/1053843/get-the-element-with-the-highest-occurrence-in-an-array */
+function mode<A>(arr: A[]){
+    return arr.sort((a,b) =>
+          arr.filter(v => v===a).length
+        - arr.filter(v => v===b).length
+    ).pop();
+}
 
 export class HandPov {
 
@@ -92,6 +99,15 @@ export class HandPov {
     public river?: Card,
     public opponent?: [Card, Card]) {}
 
+  get flush_suit() {
+    if (!this.flop) {
+      return ''
+    }
+
+
+    return mode([...this.flop, ...this.hand].map(_ => _[1]))
+
+  }
 
   get my_hand_rank() {
     if (this.flop && this.turn && this.river) {
