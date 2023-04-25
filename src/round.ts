@@ -20,7 +20,7 @@ export class PotDistribution {
 
     let back
     if (back_fen) {
-      back = back_fen.split('-').map(_ => parseInt(_))
+      back = back_fen.split('-').map(_ => parseInt(_)) as [Side, number]
     }
 
     if (win) {

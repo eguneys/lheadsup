@@ -74,10 +74,10 @@ export class HandPov {
     let f, o
 
     if (f1 && f2 && f3) {
-      f = [f1, f2, f3]
+      f = [f1, f2, f3] as [Card, Card, Card]
     }
     if (b1 && b2) {
-      o = [b1, b2]
+      o = [b1, b2] as [Card, Card]
     }
 
     return new HandPov([a1, a2], f, t, r, o)
