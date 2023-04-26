@@ -26,7 +26,7 @@ it('allin less call', () => {
   let r0 = Round.from_fen(10, 1, `100 200`)
   r0.act('phase')
   //expect(r0.fen).toBe(`80 190 / 0-0-20-bb 0-0-10-sb@`)
-  expect(r0.dests.fen).toBe(`call-10 raise-10-160 allin-190 fold`)
+  expect(r0.dests.fen).toBe(`call-10 raise-10-20-180 allin-190 fold`)
 
   r0.act('allin')
   expect(r0.fen).toBe(`80 0 / 0-0-20-bb@ 10-10-180-allin`)
@@ -49,7 +49,7 @@ it('folds uneven stack', () => {
   r0.act('phase')
 
   expect(r0.fen).toBe(`180 90 / 0-0-20-bb 0-0-10-sb@`)
-  expect(r0.dests.fen).toBe(`call-10 raise-10-60 allin-90 fold`)
+  expect(r0.dests.fen).toBe(`call-10 raise-10-20-80 allin-90 fold`)
 
   r0.act('allin')
   expect(r0.fen).toBe(`180 0 / 0-0-20-bb@ 10-10-80-allin`)
@@ -200,6 +200,34 @@ it('allin', () => {
 
 })
 
+it('min-raise', () => {
+
+  let buttons_fen = `1-2 8 1`
+
+  let r0 = Round.make(buttons_fen)
+  r0.act('phase')
+  expect(r0.fen).toBe(`98 99 / 0-0-2-bb 0-0-1-sb@`)
+  expect(r0.dests.fen).toBe(`call-1 raise-1-2-98 allin-99 fold`)
+
+  r0.act('raise', 3)
+  expect(r0.fen).toBe(`98 95 / 0-0-2-bb@ 1-1-3-raise`)
+  expect(r0.dests.fen).toBe(`call-3 raise-3-3-95 allin-98 fold`)
+
+  r0.act('raise', 10)
+  expect(r0.fen).toBe(`85 95 / 2-3-10-raise 1-1-3-raise@`)
+  expect(r0.dests.fen).toBe(`call-10 raise-10-10-85 allin-95 fold`)
+
+  r0.act('call')
+  expect(r0.fen).toBe(`85 85 / 2-3-10-raise 5-10-0-call`)
+  expect(r0.dests.fen).toBe(`phase`)
+
+  r0.act('phase')
+  expect(r0.fen).toBe(`85 85 / 0@ 0 / 30`)
+  expect(r0.dests.fen).toBe(`check raise-0-2-85 allin-85 fold`)
+
+
+})
+
 it('raise', () => {
 
   let buttons_fen = `10-20 8 1`
@@ -215,7 +243,7 @@ it('raise', () => {
   let r1 = r0.act('raise', 30)
   expect(r1.fen).toBe(`80 50 / 0-0-20-bb@ 10-10-30-raise`)
 
-  expect(r1.dests.fen).toBe(`call-30 raise-30-30 allin-80 fold`)
+  expect(r1.dests.fen).toBe(`call-30 raise-30-30-50 allin-80 fold`)
 
 
   let r2 = r1.act('raise', 30)
@@ -239,11 +267,11 @@ it('permissions', () => {
   let r0 = r00.act('phase')
   //expect(r0.fen).toBe(`80 90 / 0-0-20-bb 0-0-10-sb@`)
 
-  expect(r0.dests.fen).toBe(`call-10 raise-10-60 allin-90 fold`)
+  expect(r0.dests.fen).toBe(`call-10 raise-10-20-80 allin-90 fold`)
 
   let r1 = r0.act('call')
   //expect(r1.fen).toBe(`80 80 / 0-0-20-bb@ 10-10-0-call`)
-  expect(r1.dests.fen).toBe(`check raise-0-60 allin-80 fold`)
+  expect(r1.dests.fen).toBe(`check raise-0-20-80 allin-80 fold`)
 
 
   let r2 = r1.act('check')
@@ -253,7 +281,7 @@ it('permissions', () => {
   let r3 = r2.act('phase')
   //expect(r3.fen).toBe(`80 80 / 0@ 0 / 40`)
 
-  expect(r3.dests.fen).toBe(`check raise-0-60 allin-80 fold`)
+  expect(r3.dests.fen).toBe(`check raise-0-20-80 allin-80 fold`)
 })
 
 

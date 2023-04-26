@@ -51,7 +51,6 @@ export class PotDistribution {
   }
 }
 
-
 export class Dests {
 
   static phase = () => new Dests(true)
@@ -59,11 +58,11 @@ export class Dests {
 
   constructor(
     readonly phase?: true,
-    private check?: Bet,
-    private fold?: Bet,
-    private call?: Bet,
-    private raise?: Bet,
-    private allin?: Bet) {}
+    private check?: true,
+    private fold?: true,
+    private call?: Chips,
+    private raise?: [Chips, Chips, Chips],
+    private allin?: Chips) {}
 
     get fen() {
       if (this.phase) {
@@ -77,15 +76,15 @@ export class Dests {
       }
 
       if (call) {
-        res.push(`call-${call.match}`)
+        res.push(`call-${call}`)
       }
 
       if (raise) {
-        res.push(`raise-${raise.match}-${raise.raise}`)
+        res.push(`raise-${raise[0]}-${raise[1]}-${raise[2]}`)
       }
 
       if (allin) {
-        res.push(`allin-${allin.match}`)
+        res.push(`allin-${allin}`)
       }
 
       if (fold) {
@@ -95,24 +94,24 @@ export class Dests {
     }
 
     add_check() {
-      this.check = new Bet('check', 0, undefined, undefined)
+      this.check = true
     }
 
     add_call(to_call: Chips) {
-      this.call = new Bet('call', 0, to_call, undefined)
+      this.call = to_call
     }
 
 
-    add_raise(to_call: Chips, raise: Chips) {
-      this.raise = new Bet('raise', 0, to_call, raise)
+    add_raise(to_call: Chips, min_raise: Chips, max_raise: Chips) {
+      this.raise = [to_call, min_raise, max_raise]
     }
 
     add_allin(allin: Chips) {
-      this.allin = new Bet('allin', 0, allin, undefined)
+      this.allin = allin
     }
 
     add_fold() {
-      this.fold = new Bet('fold', 0, undefined)
+      this.fold = true
     }
 }
 
@@ -203,7 +202,7 @@ export class Round {
 
     let stacks: [Chips, Chips] = [100, 100]
 
-    return new Round(10, 1, stacks, undefined, undefined, undefined, undefined)
+    return new Round(parseInt(blinds), 1, stacks, undefined, undefined, undefined, undefined)
   }
 
   constructor(
@@ -253,21 +252,23 @@ export class Round {
           res.add_check()
         }
 
-        let raise = my_stack - to_call - this.big_blind
+        let max_raise = my_stack - to_call
+        let min_raise = Math.max(my_bet?.raise ?? 0, op_bet.raise)
 
-        if (raise > 0) {
+        if (max_raise > min_raise && min_raise > 0) {
           if (op_bet.desc !== 'allin') {
-            res.add_raise(to_call, raise)
+            res.add_raise(to_call, min_raise, max_raise)
           }
         }
       } else {
         res.add_check()
 
         let to_call = 0
-        let raise = my_stack - to_call - this.big_blind
+        let max_raise = my_stack - to_call
+        let min_raise = this.big_blind
 
-        if (raise > 0) {
-          res.add_raise(to_call, raise)
+        if (min_raise > 0) {
+          res.add_raise(to_call, min_raise, max_raise)
         }
 
       }
