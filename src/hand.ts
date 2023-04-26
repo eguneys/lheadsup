@@ -81,11 +81,13 @@ export type Hi = string
 export class PovHighlight {
 
   constructor(
-    public hand: [Hi, Hi],
-    public flop: [Hi, Hi, Hi],
-    public turn: Hi,
-    public river: Hi,
-    public opponent: [Hi, Hi]) {}
+    readonly hand: [Hi, Hi],
+    readonly flop: [Hi, Hi, Hi],
+    readonly turn: Hi,
+    readonly river: Hi,
+    readonly opponent: [Hi, Hi],
+    readonly hand_win: boolean,
+    readonly op_win: boolean) {}
 
   get fen() {
     return [this.hand.join(' '), this.flop.join(' '), this.turn, this.river, this.opponent.join(' ')].join(' ')
@@ -240,25 +242,32 @@ export class HandPov {
     let my_hi: Hi[] = highlight(my_hand, my_hand_rank!)!,
       op_hi: Hi[] = highlight(op_hand, op_hand_rank!)!
 
+    let hand_win = false,
+      op_win = false
+
     if (my_eval > op_eval) {
       hand = [my_hi[0], my_hi[1]]
       op = ['s', 's']
       flop = [my_hi[2], my_hi[3], my_hi[4]]
       turn = my_hi[5]
       river = my_hi[6]
+      hand_win = true
     } else if (my_eval < op_eval) {
       hand = ['s', 's']
       op = [op_hi[0], op_hi[1]]
       flop = [op_hi[2], op_hi[3], op_hi[4]]
       turn = op_hi[5]
       river = op_hi[6]
+      op_win = true
     } else {
       hand = [my_hi[0], my_hi[1]]
       op = [op_hi[0], op_hi[1]]
       flop = [my_hi[2], my_hi[3], my_hi[4]]
       turn = my_hi[5]
       river = my_hi[6]
+      hand_win = true
+      op_win = true
     }
-        return new PovHighlight(hand as [string, string], flop as [string, string, string], turn, river, op as [string, string])
+        return new PovHighlight(hand as [string, string], flop as [string, string, string], turn, river, op as [string, string], hand_win, op_win)
   }
 }
