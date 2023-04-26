@@ -1,5 +1,7 @@
 import { Side, next } from './round'
-import { Card, hand_rank } from './hand_eval'
+import { Card, HandRank, hand_rank } from './hand_eval'
+
+const straight_highs: Record<string, string> = { 'A': 'AKQJT', '5': '5432A', '6': '65432', '7': '76543', '8': '87654', '9': '98765', 'T': 'T9876', 'J': 'JT987', 'Q': 'QJT98', 'K': 'KQJT9' }
 
 export class Hand {
   static from_fen = (fen: string) => {
@@ -73,6 +75,83 @@ function mode<A>(arr: A[]){
     ).pop();
 }
 
+
+export type Hi = string
+
+export class PovHighlight {
+
+  constructor(
+    public hand: [Hi, Hi],
+    public flop: [Hi, Hi, Hi],
+    public turn: Hi,
+    public river: Hi,
+    public opponent: [Hi, Hi]) {}
+
+  get fen() {
+    return [this.hand.join(' '), this.flop.join(' '), this.turn, this.river, this.opponent.join(' ')].join(' ')
+  }
+
+}
+
+function highlight(hand: Card[], hand_rank: HandRank) {
+  if (hand_rank.quad) {
+    return hand.map(_ => _[0] === hand_rank.quad![0] ? 'h' : 's')
+  }
+  if (hand_rank.high) {
+    return hand.map(_ => hand_rank.high!.includes(_[0]) ? 'h' : 's')
+  }
+  if (hand_rank.full) {
+    return hand.map(_ => 
+                    _[0] === hand_rank.full![0] ? 'h' : 
+                    _[0] === hand_rank.full![1] ? 'h' : 
+                    's')
+  }
+  if (hand_rank.set) {
+    return hand.map(_ => 
+                    _[0] === hand_rank.set![0] ? 'h' : 
+                    _[0] === hand_rank.set![1] ? 'k' : 
+                    _[0] === hand_rank.set![2] ? 'k' : 
+                    's')
+  }
+  if (hand_rank.pair2) {
+    let k_found = false
+    return hand.map(_ => {
+      let kicker = false
+      if (!k_found && _[0] === hand_rank.pair2![2]) {
+        kicker = true
+      }
+      let res = _[0] === hand_rank.pair2![0] ? 'h' :
+        _[0] === hand_rank.pair2![1] ? 'h' :
+        kicker ? 'k' :
+        's'
+      k_found = k_found || kicker
+      return res
+    })
+  }
+  if (hand_rank.pair) {
+    return hand.map(_ => 
+                    _[0] === hand_rank.pair![0] ? 'h' : 
+                    _[0] === hand_rank.pair![1] ? 'k' : 
+                    's')
+
+  }
+
+  if (hand_rank.sflush) {
+    let highs = straight_highs[hand_rank.sflush].split('')
+    return hand.map(_ => highs.includes(_[0]) ? 'h' : 's')
+  }
+
+  if (hand_rank.straight) {
+    let highs = straight_highs[hand_rank.straight].split('')
+    return hand.map(_ => highs.includes(_[0]) ? 'h' : 's')
+  }
+
+  if (hand_rank.flush) {
+    let suit = mode(hand.map(_ => _[1]))
+    return hand.map(_ => (hand_rank.flush!.includes(_[0]) && _[1] === suit) ? 'h' : 's')
+  }
+}
+
 export class HandPov {
 
   static from_fen = (fen: string) => {
@@ -109,14 +188,22 @@ export class HandPov {
 
   }
 
+  get my_hand() {
+    return [...this.hand, ...this.flop!, this.turn!, this.river!]
+  }
+
+  get op_hand() {
+    return [...this.opponent!, ...this.flop!, this.turn!, this.river!]
+  }
+
   get my_hand_rank() {
     if (this.flop && this.turn && this.river) {
-      return hand_rank([...this.hand, ...this.flop, this.turn, this.river])
+      return hand_rank(this.my_hand)
     }
   }
   get op_hand_rank() {
     if (this.flop && this.turn && this.river && this.opponent) {
-      return hand_rank([...this.opponent, ...this.flop, this.turn, this.river])
+      return hand_rank(this.op_hand)
     }
   }
 
@@ -135,5 +222,43 @@ export class HandPov {
       res += ` ${this.opponent.join(' ')}`
     }
     return res
+  }
+
+
+  get highlight() {
+    let hand,
+      op,
+      flop,
+      turn,
+    river
+
+    let { my_hand, op_hand } = this
+    let { my_hand_rank, op_hand_rank } = this
+    let my_eval = my_hand_rank!.hand_eval
+    let op_eval = op_hand_rank!.hand_eval
+
+    let my_hi: Hi[] = highlight(my_hand, my_hand_rank!)!,
+      op_hi: Hi[] = highlight(op_hand, op_hand_rank!)!
+
+    if (my_eval > op_eval) {
+      hand = [my_hi[0], my_hi[1]]
+      op = ['s', 's']
+      flop = [my_hi[2], my_hi[3], my_hi[4]]
+      turn = my_hi[5]
+      river = my_hi[6]
+    } else if (my_eval < op_eval) {
+      hand = ['s', 's']
+      op = [op_hi[0], op_hi[1]]
+      flop = [op_hi[2], op_hi[3], op_hi[4]]
+      turn = op_hi[5]
+      river = op_hi[6]
+    } else {
+      hand = [my_hi[0], my_hi[1]]
+      op = [op_hi[0], op_hi[1]]
+      flop = [my_hi[2], my_hi[3], my_hi[4]]
+      turn = my_hi[5]
+      river = my_hi[6]
+    }
+        return new PovHighlight(hand as [string, string], flop as [string, string, string], turn, river, op as [string, string])
   }
 }

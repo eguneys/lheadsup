@@ -12,7 +12,7 @@ export const HandEvalFunctions = {
   set: (a: number, b: number, c: number) => Rank6 * 3 + Rank3 * a + Rank2 * b + c,
   full: (a: number, b: number) => Rank6 * 4 + Rank2 * a + b,
   straight: (a: number) => Rank6 * 5 + a,
-  flush: (a: number) => Rank6 * 6 + a,
+  flush: (a: number, b: number, c: number, d: number, e: number) => Rank6 * 6 + Rank5 * a + Rank4 * b + Rank3 * c + Rank2 * d + e,
   quad: (a: number) => Rank6 * 7 + a,
   sflush: (a: number) => Rank6 * 8 + a,
 }
@@ -37,7 +37,7 @@ export class HandRank {
       case 'straight':
         return HandRank.straight(rest[0])
       case 'flush':
-        return HandRank.flush(rest[0])
+        return HandRank.flush(rest as [Card, Card, Card, Card, Card])
       case 'quad':
         return HandRank.quad(rest[0])
       case 'sflush':
@@ -52,7 +52,7 @@ export class HandRank {
   static set = (set: [Card, Card, Card]) => new HandRank(undefined, undefined, undefined, undefined, set)
   static full = (full: [Card, Card]) => new HandRank(undefined, undefined, undefined, undefined, undefined, full)
   static straight = (straight: Card) => new HandRank(undefined, undefined, undefined, undefined, undefined, undefined, straight)
-  static flush = (flush: Card) => new HandRank(undefined, undefined, undefined, undefined, undefined, undefined, undefined, flush)
+  static flush = (flush: [Card, Card, Card, Card, Card]) => new HandRank(undefined, undefined, undefined, undefined, undefined, undefined, undefined, flush)
   static sflush = (sflush: Card) => new HandRank(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, sflush)
 
   constructor(public quad?: Card, 
@@ -62,7 +62,7 @@ export class HandRank {
              public set?: [Card, Card, Card],
              public full?: [Card, Card],
              public straight?: Card,
-             public flush?: Card,
+             public flush?: [Card, Card, Card, Card, Card],
              public sflush?: Card) {}
 
   get fen() {
@@ -94,7 +94,7 @@ export class HandRank {
     }
 
     if (this.flush) {
-      return `flush ${this.flush}`
+      return `flush ${this.flush.join(' ')}`
     }
   }
 
@@ -126,8 +126,8 @@ export function rank_eval(rank: HandRank) {
     let a = card_rank(rank.straight)
     return HandEvalFunctions.straight(a)
   } else if (rank.flush) {
-    let a = card_rank(rank.flush)
-    return HandEvalFunctions.flush(a)
+    let [a, b, c, d, e] = rank.flush.map(card_rank)
+    return HandEvalFunctions.flush(a, b, c, d, e)
   } else if (rank.quad) {
     let a = card_rank(rank.quad)
     return HandEvalFunctions.quad(a)
@@ -212,7 +212,7 @@ export function rank5(hand: [Card, Card, Card, Card, Card]): HandRank {
   }
 
   if (is_flush) {
-    return HandRank.flush(top[0])
+    return HandRank.flush(hand.map(_ => _[0]) as [Card, Card, Card, Card, Card])
   }
 
 
