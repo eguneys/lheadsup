@@ -228,6 +228,19 @@ it('min-raise', () => {
 
 })
 
+
+it('min-raise cant raise', () => {
+
+  let r0 = Round.from_fen(10, 1, `20 85 / 0@ 0-0-10-raise / 30`)
+  expect(r0.dests.fen).toBe(`call-10 allin-20 fold`)
+
+  let r1 = Round.from_fen(10, 1, `20 85 / 0@ 0-0-20-raise / 30`)
+  expect(r1.dests.fen).toBe(`allin-20 fold`)
+
+  let r2 = Round.from_fen(10, 1, `20 85 / 0@ 0-0-9-raise / 30`)
+  expect(r2.dests.fen).toBe(`call-9 raise-9-9-11 allin-20 fold`)
+})
+
 it('raise', () => {
 
   let buttons_fen = `10-20 8 1`
