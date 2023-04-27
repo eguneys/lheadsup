@@ -100,7 +100,8 @@ function highlight(hand: Card[], hand_rank: HandRank) {
     return hand.map(_ => _[0] === hand_rank.quad![0] ? 'h' : 's')
   }
   if (hand_rank.high) {
-    return hand.map(_ => hand_rank.high!.includes(_[0]) ? 'h' : 's')
+    return hand.map(_ => hand_rank.high![0] === _[0] ? 'h' : 
+                    hand_rank.high!.slice(1)!.includes(_[0]) ? 'k' : 's')
   }
   if (hand_rank.full) {
     return hand.map(_ => 

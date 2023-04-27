@@ -60,7 +60,7 @@ it('pov hand showdown', () => {
 
   let hands = [
     ...edge_cases,
-    [`9c 3s 2c Ts 7h Kd 5d 6h Qh`, `high K T 9 7 5`, `s s s h h h s h h`],
+    [`9c 3s 2c Ts 7h Kd 5d 6h Qh`, `high K T 9 7 5`, `s s s k k h s k k`],
     [`Qh Qd 8s 8d 6c 6s 2h 2s 3s`,`pair2 Q 8 6`, `h h h h k s s s s`],
     [`Qd Qh Qc Qs 5d 2c 8s 3s 2s`,`quad Q`, `h h h h s s s s s`],
     [`Kc Kh Ks Jd Jc 6h 7s 2s 3s`,`full K J`, `h h h h h s s s s`],
