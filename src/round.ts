@@ -56,13 +56,46 @@ export class Dests {
   static phase = () => new Dests(true)
   static user = () => new Dests(undefined)
 
+  static from_fen = (fen: string) => {
+    let dests = fen.split(' ')
+
+    if (dests[0] === 'phase') {
+      return Dests.phase()
+    }
+
+    let res = Dests.user()
+
+    dests.forEach(_ => {
+      if (_ === 'check') {
+        res.add_check()
+      } else if (_ === 'fold') {
+        res.add_fold()
+      } else {
+        let args = _.split('-')
+
+        if (args[0] === 'call') {
+          let to_call = parseInt(args[1])
+          res.add_call(to_call)
+        } else if (args[0] === 'raise') {
+          let [to_call, min_raise, max_raise] = args.slice(1).map(_ => parseInt(_))
+          res.add_raise(to_call, min_raise, max_raise)
+        } else if (args[0] === 'allin') {
+          let to_rest = parseInt(args[1])
+          res.add_allin(to_rest)
+        }
+      }
+    })
+
+    return res
+  }
+
   constructor(
     readonly phase?: true,
-    private check?: true,
-    private fold?: true,
-    private call?: Chips,
-    private raise?: [Chips, Chips, Chips],
-    private allin?: Chips) {}
+    readonly check?: true,
+    readonly fold?: true,
+    readonly call?: Chips,
+    readonly raise?: [Chips, Chips, Chips],
+    readonly allin?: Chips) {}
 
     get fen() {
       if (this.phase) {

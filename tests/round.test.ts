@@ -1,5 +1,15 @@
 import { it, expect } from 'vitest'
-import { Round } from '../src'
+import { Dests, Round } from '../src'
+
+
+it('dests read', () => {
+
+  [`call-10 raise-10-20-180 allin-190 fold`,
+    `phase`,
+    `check raise-0-20-80 allin-80 fold`]
+    .forEach(_ => expect(Dests.from_fen(_).fen).toBe(_))
+})
+
 
 it('allin blinds', () => {
   let r0 = Round.from_fen(10, 1, `20 100`)
