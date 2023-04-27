@@ -90,12 +90,12 @@ export class Dests {
   }
 
   constructor(
-    readonly phase?: true,
-    readonly check?: true,
-    readonly fold?: true,
-    readonly call?: Chips,
-    readonly raise?: [Chips, Chips, Chips],
-    readonly allin?: Chips) {}
+    public phase?: true,
+    public check?: true,
+    public fold?: true,
+    public call?: Chips,
+    public raise?: [Chips, Chips, Chips],
+    public allin?: Chips) {}
 
     get fen() {
       if (this.phase) {
@@ -286,7 +286,7 @@ export class Round {
         }
 
         let max_raise = my_stack - to_call
-        let min_raise = Math.max(my_bet?.raise ?? 0, op_bet.raise)
+        let min_raise = op_bet.raise ? Math.max(my_bet?.raise ?? 0, op_bet.raise) : this.big_blind
 
         if (max_raise > min_raise && min_raise > 0) {
           if (op_bet.desc !== 'allin') {

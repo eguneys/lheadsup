@@ -10,6 +10,16 @@ it('dests read', () => {
     .forEach(_ => expect(Dests.from_fen(_).fen).toBe(_))
 })
 
+it('raise after check', () => {
+
+  let r0 = Round.from_fen(1, 1, `85 85 / 0@ 0 / 30`)
+
+  r0.act('check')
+  expect(r0.fen).toBe(`85 85 / 0-0-0-check 0@ / 30`)
+  expect(r0.dests.fen).toBe(`check raise-0-2-85 allin-85 fold`)
+
+})
+
 
 it('allin blinds', () => {
   let r0 = Round.from_fen(10, 1, `20 100`)
