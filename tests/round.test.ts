@@ -77,6 +77,27 @@ it('folds uneven stack', () => {
 
 })
 
+it('pov', () => {
+
+  let r
+
+  r = Round.from_fen(10, 1, `0 0 / show-300 2-100`)
+  expect(r.pov(1).fen).toBe(`0 0 / show-300 2-100`)
+  expect(r.pov(2).fen).toBe(`0 0 / show-300 1-100`)
+
+  r = Round.from_fen(10, 1, `20 50 / 20-30-30-raise 10-10-30-raise@`)
+  expect(r.pov(1).fen).toBe(`20 50 / 20-30-30-raise 10-10-30-raise@`)
+  expect(r.pov(2).fen).toBe(`50 20 / 10-10-30-raise@ 20-30-30-raise`)
+
+  r = Round.from_fen(10, 1, `100 100`)
+  expect(r.pov(1).fen).toBe(`100 100`)
+  expect(r.pov(2).fen).toBe(`100 100`)
+  
+  r = Round.from_fen(10, 1, `80 90 / 0@ 0 / 40-0-0`)
+  expect(r.pov(1).fen).toBe(`80 90 / 0@ 0 / 40-0-0`)
+  expect(r.pov(2).fen).toBe(`90 80 / 0 0@ / 40-0-0`)
+})
+
 it('imports fen', () => {
   let fens = [
     `0 0 / show-300 2-100`,
