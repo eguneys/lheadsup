@@ -1,7 +1,7 @@
 import { it, expect } from 'vitest'
 import { RoundN } from '../src'
 
-it.only('three way', () => {
+it('three way', () => {
 
   let r = RoundN.from_fen(`10-20 1 | d100 / d200 / d300 $!`)
 
@@ -87,20 +87,25 @@ it.only('three way', () => {
 
   expect(r.fen).toBe(`10-20 1 | s80 AhAc / s180 2h2c / s280 3h3c $ 60 0 0 0 !4h5h6h7h8h`)
 
+  expect(r.pov(1).fen).toBe(`10-20 1 | s80 AhAc / s180 2h2c / s280 3h3c $ 60 0 0 0 !4h5h6h7h8h`)
 
-  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['p 0', 'c 1 s', 'a 1', 'c 2 s', 'a 2', 'c 3 s', 'a 3'])
+  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['p 0', 'c 1 s', 'a 1', 'c 2 s', 'a 2', 'c 3 s', 'a 3', 'r 2 2h2c', 'r 3 3h3c'])
 
   expect(r.dests.fen).toBe('showdown')
 
   events = r.act('showdown')
   expect(r.fen).toBe(`10-20 1 | s80 AhAc / s180 2h2c / s280 3h3c $ 60 0 0 0 !4h5h6h7h8h shares win-1-60`)
 
-  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['r 2 2h2c', 'r 3 3h3c', 'w win-1-60'])
+  expect(r.pov(1).fen).toBe(`10-20 1 | s80 AhAc / s180 2h2c / s280 3h3c $ 60 0 0 0 !4h5h6h7h8h shares win-1-60`)
+
+  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['w win-1-60'])
 
   expect(r.dests.fen).toBe('share')
 
   events = r.act('share')
   expect(r.fen).toBe(`10-20 2 | d140 / d180 / d280 $!`)
+
+  expect(r.pov(1).fen).toBe(`10-20 2 | d140 / d180 / d280 $!`)
 
   expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['c 1 d', 'o 1', 'c 2 d', 'o 2', 'c 3 d', 'o 3', 'C', 'S 1 60', 'b 2'])
 

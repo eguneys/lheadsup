@@ -30,7 +30,8 @@ export class RoundNPov {
     public pot: Chips[],
     public flop?: [Card, Card, Card],
     public turn?: Card,
-    public river?: Card) {}
+    public river?: Card,
+    public shares?: PotShare[]) {}
 
   get fen() {
 
@@ -48,7 +49,12 @@ export class RoundNPov {
 
     let middle = (this.flop?.join('') ?? '') + (this.turn ?? '') + (this.river ?? '')
 
-    return `${header} | ${stacks} $${pot}!${middle}`
+    let shares = (this.shares?.map(_ => _.fen).join(' ') ?? '')
+    if (shares) {
+      shares = ` shares ${shares}`
+    }
+
+    return `${header} | ${stacks} $${pot}!${middle}${shares}`
   }
 }
 
@@ -159,8 +165,9 @@ export class Stack {
     public bet?: Bet) {}
 
     get hide_cards() {
-      let { state, stack, bet } = this
-      return new Stack(state, stack, undefined, bet)
+      let { state, stack, bet, hand } = this
+      let show_if_showdown = state === 's' ? hand : undefined
+      return new Stack(state, stack, show_if_showdown, bet)
     }
 
   get fen() {
@@ -382,7 +389,8 @@ export class RoundN {
       this.pot,
       flop,
       turn,
-      river
+      river,
+      this.shares
     )
   }
 
@@ -519,6 +527,11 @@ export class RoundN {
             events.all(this.change_state(side, 's'))
             events.all(this.post_bet(side))
           })
+
+          let showdowns = this.find_stack_sides_with_states('s')
+          showdowns.forEach(side => {
+            events.others(side, new RevealHand(side, this.stacks[side - 1].hand))
+          })
         } else {
           phase_sides.forEach(side => {
             if (side === big_blind_side) {
@@ -536,11 +549,6 @@ export class RoundN {
 
         let pot_winner = 1
         let pot_chips = sum(this.pot)
-
-        let showdowns = this.find_stack_sides_with_states('s')
-        showdowns.forEach(side => {
-          events.others(side, new RevealHand(side, this.stacks[side - 1].hand))
-        })
 
         events.all(this.pot_share(PotShare.win(pot_winner, pot_chips)))
 
