@@ -323,6 +323,9 @@ export class Pot {
 
     this.sides = this.sides.filter(_ => !shorts.includes(_))
     this.chips -= side_chips
+
+
+    return new SidePotEvent(shorts, chips)
   }
 
 
@@ -647,7 +650,7 @@ export class RoundN {
           return abet - bbet
         }).forEach(side => {
           let chips = this.stacks[side - 1].bet.total - decrease
-          this.pot.side_pot([side], chips)
+          events.all(this.pot.side_pot([side], chips))
           decrease += chips
         })
 
@@ -845,6 +848,19 @@ export class RoundN {
 }
 
 export abstract class Event {}
+
+
+export class SidePotEvent extends Event {
+  constructor(readonly shorts: Side[], readonly chips: Chips) { super() }
+
+  pov(nb: number, pov: Side) {
+    return new SidePotEvent(this.shorts.map(side => pov_side(nb, pov, side)), this.chips)
+  }
+
+  get fen() {
+    return `v ${this.shorts.join('')} ${this.chips}`
+  }
+}
 
 export class PotAddBet extends Event {
   constructor(readonly side: Side, readonly chips: Chips) { super() }
