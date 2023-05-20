@@ -6,10 +6,9 @@ export type Side = 1 | 2
 export type Action = string
 export type BetDescription = string
 
-export class PotDistribution {
 
-  static show = (pot: Chips, back?: [Side, Chips]) => new PotDistribution(pot, undefined, back)
-  static win = (win: [Side, Chips], back?: [Side, Chips]) => new PotDistribution(undefined, win, back)
+export class PotDistributionPov {
+
 
   static from_fen = (fen: string) => {
 
@@ -20,17 +19,18 @@ export class PotDistribution {
 
     let back
     if (back_fen) {
-      back = back_fen.split('-').map(_ => parseInt(_))
+      back = back_fen.split('-').map(_ => parseInt(_)) as [Side, number]
     }
 
     if (win) {
       let [side, pot] = win.split('-').map(_ => parseInt(_))
-      return new PotDistribution(undefined, [side as Side, pot], back)
+      return new PotDistributionPov(undefined, [side as Side, pot], back)
     }
     if (show) {
-      return new PotDistribution(parseInt(show), undefined, back)
+      return new PotDistributionPov(parseInt(show), undefined, back)
     }
   }
+
 
   constructor(
     readonly show?: Chips,
@@ -49,21 +49,108 @@ export class PotDistribution {
       return back ? `win-${this.win.join('-')} ${back}` : `win-${this.win.join('-')}`
     }
   }
+
 }
 
+
+export class PotDistribution {
+
+  static show = (pot: Chips, back?: [Side, Chips]) => new PotDistribution(pot, undefined, back)
+  static win = (win: [Side, Chips], back?: [Side, Chips]) => new PotDistribution(undefined, win, back)
+
+  static from_fen = (fen: string) => {
+
+    let [winshow, back_fen] = fen.split(' ')
+
+    let win = winshow.split('win-')[1]
+    let show = winshow.split('show-')[1]
+
+    let back
+    if (back_fen) {
+      back = back_fen.split('-').map(_ => parseInt(_)) as [Side, number]
+    }
+
+    if (win) {
+      let [side, pot] = win.split('-').map(_ => parseInt(_))
+      return new PotDistribution(undefined, [side as Side, pot], back)
+    }
+    if (show) {
+      return new PotDistribution(parseInt(show), undefined, back)
+    }
+  }
+
+  constructor(
+    readonly show?: Chips,
+    readonly win?: [Side, Chips],
+    readonly back?: [Side, Chips]) {}
+
+
+  pov(pov: Side) {
+    let show = this.show
+    let win: [Side, Chips] | undefined = this.win ? [side_pov(pov, this.win[0]), this.win[1]] : undefined
+    let back: [Side, Chips] | undefined = this.back ? [side_pov(pov, this.back[0]), this.back[1]] : undefined
+
+    return new PotDistributionPov(show, win, back)
+  }
+
+  get fen() {
+    let back
+    if (this.back) {
+      back = this.back.join('-')
+    }
+    if (this.show !== undefined) {
+      return back ? `show-${this.show} ${back}` : `show-${this.show}`
+    } else if (this.win !== undefined) {
+      return back ? `win-${this.win.join('-')} ${back}` : `win-${this.win.join('-')}`
+    }
+  }
+}
 
 export class Dests {
 
   static phase = () => new Dests(true)
   static user = () => new Dests(undefined)
 
+  static from_fen = (fen: string) => {
+    let dests = fen.split(' ')
+
+    if (dests[0] === 'phase') {
+      return Dests.phase()
+    }
+
+    let res = Dests.user()
+
+    dests.forEach(_ => {
+      if (_ === 'check') {
+        res.add_check()
+      } else if (_ === 'fold') {
+        res.add_fold()
+      } else {
+        let args = _.split('-')
+
+        if (args[0] === 'call') {
+          let to_call = parseInt(args[1])
+          res.add_call(to_call)
+        } else if (args[0] === 'raise') {
+          let [to_call, min_raise, max_raise] = args.slice(1).map(_ => parseInt(_))
+          res.add_raise(to_call, min_raise, max_raise)
+        } else if (args[0] === 'allin') {
+          let to_rest = parseInt(args[1])
+          res.add_allin(to_rest)
+        }
+      }
+    })
+
+    return res
+  }
+
   constructor(
-    readonly phase?: true,
-    private check?: Bet,
-    private fold?: Bet,
-    private call?: Bet,
-    private raise?: Bet,
-    private allin?: Bet) {}
+    public phase?: true,
+    public check?: true,
+    public fold?: true,
+    public call?: Chips,
+    public raise?: [Chips, Chips, Chips],
+    public allin?: Chips) {}
 
     get fen() {
       if (this.phase) {
@@ -77,15 +164,15 @@ export class Dests {
       }
 
       if (call) {
-        res.push(`call-${call.match}`)
+        res.push(`call-${call}`)
       }
 
       if (raise) {
-        res.push(`raise-${raise.match}-${raise.raise}`)
+        res.push(`raise-${raise[0]}-${raise[1]}-${raise[2]}`)
       }
 
       if (allin) {
-        res.push(`allin-${allin.match}`)
+        res.push(`allin-${allin}`)
       }
 
       if (fold) {
@@ -95,24 +182,24 @@ export class Dests {
     }
 
     add_check() {
-      this.check = new Bet('check', 0, undefined, undefined)
+      this.check = true
     }
 
     add_call(to_call: Chips) {
-      this.call = new Bet('call', 0, to_call, undefined)
+      this.call = to_call
     }
 
 
-    add_raise(to_call: Chips, raise: Chips) {
-      this.raise = new Bet('raise', 0, to_call, raise)
+    add_raise(to_call: Chips, min_raise: Chips, max_raise: Chips) {
+      this.raise = [to_call, min_raise, max_raise]
     }
 
     add_allin(allin: Chips) {
-      this.allin = new Bet('allin', 0, allin, undefined)
+      this.allin = allin
     }
 
     add_fold() {
-      this.fold = new Bet('fold', 0, undefined)
+      this.fold = true
     }
 }
 
@@ -150,6 +237,97 @@ export class Bet {
     return (this.match ?? 0) + (this.raise ?? 0)
   }
 }
+
+export class RoundPov {
+
+  static from_fen = (round_fen: string) => {
+    let [stacks_fen, ...rest] = round_fen.split(' / ')
+
+    let stacks: [Chips, Chips] = stacks_fen.split(' ').map(_ => parseInt(_)) as [Chips, Chips]
+
+
+
+    let pot, bets, action, distribution
+
+    function parse_bets(rest: string) {
+      bets = rest.split(' ').map((_, i) => {
+          if (_[_.length - 1] === '@') {
+            action = (i + 1)
+            return Bet.from_fen(_.slice(0, -1))
+          }
+          return Bet.from_fen(_)
+        })
+    }
+
+    if (rest.length === 0) {
+    } else if (rest.length === 1) {
+
+      if (rest[0][0] === 'w' || rest[0][0] === 's') {
+        distribution = PotDistributionPov.from_fen(rest[0])
+      } else {
+        parse_bets(rest[0])
+      }
+    } else {
+      parse_bets(rest[0])
+      pot = rest[1].split('-').map(_ => parseInt(_))
+    }
+
+    return new RoundPov(stacks, pot, bets, action, distribution)
+  }
+
+  constructor(
+    readonly stacks: [Chips, Chips],
+    private pot?: Chips[],
+    private bets?: [Bet | undefined, Bet | undefined],
+    private action?: Side,
+    public distribution?: PotDistributionPov
+  ) {}
+
+
+  get fen() {
+    let stacks = this.stacks.join(' ')
+
+    if (this.bets) {
+
+      let bets = this.bets.map((_, i) => {
+        if (_) {
+          if (this.action && i === this.action - 1) {
+            return `${_.fen}@`
+          } else {
+            return _.fen
+          }
+        } else {
+          if (this.action && i === this.action - 1) {
+            return '0@'
+          } else {
+            return '0'
+          }
+        }
+      }).join(' ')
+
+
+      if (this.pot) {
+        let pot = this.pot.join('-')
+
+        return [stacks, bets, pot].join(' / ')
+      } else {
+        return [stacks, bets].join(' / ')
+      }
+
+    } else {
+
+      if (this.distribution) {
+        return [stacks, this.distribution.fen].join(' / ')
+      } else {
+        return `${stacks}`
+      }
+    }
+  }
+
+
+}
+
+export const side_pov = (pov: Side, side: Side) => (pov === 1) ? side : next(side)
 
 export const next = (a: Side) => a === 1 ? 2 : 1
 
@@ -203,7 +381,7 @@ export class Round {
 
     let stacks: [Chips, Chips] = [100, 100]
 
-    return new Round(10, 1, stacks, undefined, undefined, undefined, undefined)
+    return new Round(parseInt(blinds), 1, stacks, undefined, undefined, undefined, undefined)
   }
 
   constructor(
@@ -226,6 +404,29 @@ export class Round {
 
   get small_blind_side() {
     return next(this.button)
+  }
+
+
+  pov(s: Side) {
+
+    let stacks: [Chips, Chips] = [
+      this.stacks[side_pov(s, 1) - 1],
+      this.stacks[side_pov(s, 2) - 1]
+    ]
+
+    let pot = this.pot
+
+    let bets: [Bet | undefined, Bet| undefined] | undefined = this.bets ? [
+      this.bets[side_pov(s, 1) - 1],
+      this.bets[side_pov(s, 2) - 1]
+    ]: undefined
+
+    let action = this.action ? side_pov(s, this.action): undefined
+    let distribution = this.distribution?.pov(s)
+
+
+    return new RoundPov(stacks, pot, bets, action, distribution)
+
   }
 
   get dests() {
@@ -253,21 +454,23 @@ export class Round {
           res.add_check()
         }
 
-        let raise = my_stack - to_call - this.big_blind
+        let max_raise = my_stack - to_call
+        let min_raise = op_bet.raise ? Math.max(my_bet?.raise ?? 0, op_bet.raise) : this.big_blind
 
-        if (raise > 0) {
+        if (max_raise > min_raise && min_raise > 0) {
           if (op_bet.desc !== 'allin') {
-            res.add_raise(to_call, raise)
+            res.add_raise(to_call, min_raise, max_raise)
           }
         }
       } else {
         res.add_check()
 
         let to_call = 0
-        let raise = my_stack - to_call - this.big_blind
+        let max_raise = my_stack - to_call
+        let min_raise = this.big_blind
 
-        if (raise > 0) {
-          res.add_raise(to_call, raise)
+        if (min_raise > 0) {
+          res.add_raise(to_call, min_raise, max_raise)
         }
 
       }

@@ -31,7 +31,7 @@ it('evaluate hand to rank', () => {
 
   expect(fen_hand_rank(`Kc Kh 2s 9h 3d 6c 7d`)).toBe(`pair K 9 7 6`)
   expect(fen_hand_rank(`5c 6d 7s 8h 9h Qc 2d`)).toBe('straight 9')
-  expect(fen_hand_rank(`Ah 2h 5h 8h Kh 7s Jc`)).toBe('flush A')
+  expect(fen_hand_rank(`Ah 2h 5h 8h Kh 7s Jc`)).toBe('flush A K 8 5 2')
 
   expect(fen_hand_rank(`Ah 2d 3c 4s 5h 8c Qd`)).toBe('straight 5')
   expect(fen_hand_rank(`Tc Jh Qd Ks Ah 4c 7d`)).toBe('straight A')
@@ -60,8 +60,8 @@ it('evaluate rank to number', () => {
   expect(fen_rank_eval('straight 9')).toBe(straight(9))
   expect(fen_rank_eval('straight A')).toBe(straight(A))
   expect(fen_rank_eval('straight 5')).toBe(straight(5))
-  expect(fen_rank_eval('flush T')).toBe(flush(T))
-  expect(fen_rank_eval('flush A')).toBe(flush(A))
+  expect(fen_rank_eval('flush T 9 8 7 4')).toBe(flush(T, 9, 8, 7, 4))
+  expect(fen_rank_eval('flush A Q J T 9')).toBe(flush(A, Q, J, T, 9))
   expect(fen_rank_eval('quad T')).toBe(quad(T))
   expect(fen_rank_eval('quad A')).toBe(quad(A))
   expect(fen_rank_eval('sflush 9')).toBe(sflush(9))
