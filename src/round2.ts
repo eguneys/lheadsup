@@ -390,7 +390,7 @@ export class RoundN {
       flop,
       turn,
       river,
-      this.shares
+      this.shares?.map(_ => _.pov(nb, side))
     )
   }
 

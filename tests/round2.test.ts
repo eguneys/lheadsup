@@ -97,6 +97,7 @@ it('three way', () => {
   expect(r.fen).toBe(`10-20 1 | s80 AhAc / s180 2h2c / s280 3h3c $ 60 0 0 0 !4h5h6h7h8h shares win-1-60`)
 
   expect(r.pov(1).fen).toBe(`10-20 1 | s80 AhAc / s180 2h2c / s280 3h3c $ 60 0 0 0 !4h5h6h7h8h shares win-1-60`)
+  expect(r.pov(2).fen).toBe(`10-20 3 | s180 2h2c / s280 3h3c / s80 AhAc $ 60 0 0 0 !4h5h6h7h8h shares win-3-60`)
 
   expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['w win-1-60'])
 
