@@ -141,6 +141,7 @@ export function rank_eval(rank: HandRank) {
 const sort_higher = (a: string, b: string) => card_rank(b) - card_rank(a)
 const sort_higher_card = (a: string, b: string) => card_rank(b[0]) - card_rank(a[0])
 
+// http://nsayer.blogspot.com/2007/07/algorithm-for-evaluating-poker-hands.htm
 export function rank5(hand: [Card, Card, Card, Card, Card]): HandRank {
 
   const rankCount: { [_: string]: number } = {}
