@@ -369,7 +369,7 @@ export class RoundN {
 
     let pov_stacks = stacks.slice(side - 1)
 
-    if (side !== 0) {
+    if (side !== 1) {
 
       pov_stacks = [...pov_stacks, ...stacks.slice(0, side - 1)]
     }
@@ -510,14 +510,14 @@ export class RoundN {
       case 'phase': {
         let { phase_sides, have_contributed_to_pots } =  this
 
-      if (this.pot.length === 0) {
-        events.all(new FlopEvent(this.middle.slice(0, 3)))
-      } else if (this.pot.length === 1) {
-        events.all(new TurnEvent(this.middle[3]))
-      } else if (this.pot.length === 2) {
-        events.all(new RiverEvent(this.middle[4]))
-      } 
-      
+        if (this.pot.length === 0) {
+          events.all(new FlopEvent(this.middle.slice(0, 3)))
+        } else if (this.pot.length === 1) {
+          events.all(new TurnEvent(this.middle[3]))
+        } else if (this.pot.length === 2) {
+          events.all(new RiverEvent(this.middle[4]))
+        } 
+
         let pot_contribution = sum(have_contributed_to_pots.map(_ => _.bet.total))
         events.all(new PotEvent(pot_contribution))
         this.pot.push(pot_contribution)
