@@ -161,7 +161,8 @@ export class Stack {
     let state = fen.trim()[0]
     let [stack, hand, bet] = fen.trim().slice(1).split(' ')
 
-    if (hand.length === 4 && hand !== 'fold') {
+    if (!hand) {
+    } else if (hand.length === 4 && hand !== 'fold') {
     } else {
       bet = hand
       hand = undefined
@@ -434,21 +435,24 @@ export class RoundN {
     if (action) {
       let res = Dests.fold
 
+      let action_stack = action.stack
       let action_bet = action.bet
 
       let bets = in_other_than_actions.map(_ => (_.bet?.total ?? 0))
+      let raises = in_other_than_actions.map(_ => (_.bet?.raise ?? 0))
       let max_bet = Math.max(...bets)
+      let max_raise = Math.max(...raises)
 
       let previous = (action_bet?.total ?? 0)
       let to_match = max_bet - previous
       
       if (to_match === 0) {
         res.check = true
-      } else if (to_match > 0) {
+      } else if (to_match > 0 && action_stack > to_match) {
         res.call = new Call(to_match)
       }
 
-      let min_raise = this.small_blind * 2
+      let min_raise = Math.max(this.small_blind * 2, max_raise)
 
       res.raise = new Raise(to_match, min_raise)
 
@@ -495,19 +499,40 @@ export class RoundN {
           events.only(side, new HandEvent(side, _.hand))
         })
 
+        let big_blind_stack = this.stacks[big_blind_side - 1].stack
+        let big_blind_all_in = big_blind_stack <= big_blind
+
+        let small_blind_stack = this.stacks[small_blind_side - 1].stack
+        let small_blind_all_in = small_blind_stack <= small_blind
+
         deal_sides.forEach((side, i) => {
           let _ = this.stacks[side - 1]
 
-          if (side === side_action_preflop) {
+          if (small_blind_all_in && side === small_blind_side) {
+            events.all(this.change_state(side, 'a'))
+          } else if (big_blind_all_in && side === big_blind_side) {
+            events.all(this.change_state(side, 'a'))
+          } else if (side === side_action_preflop) {
             events.all(this.change_state(side, '@'))
           } else {
             events.all(this.change_state(side, 'i'))
           }
         })
 
+        let bb_events
+        if (big_blind_all_in) {
+          bb_events = this.post_bet(big_blind_side, 'allin', 0, big_blind_stack)
+        } else {
+          bb_events = this.post_bet(big_blind_side, 'bb', 0, big_blind)
+        }
 
-        let sb_events = this.post_bet(small_blind_side, 'sb', 0, small_blind)
-        let bb_events = this.post_bet(big_blind_side, 'bb', 0, big_blind)
+        let sb_events
+       
+        if (small_blind_all_in) {
+          sb_events = this.post_bet(small_blind_side, 'allin', 0, small_blind_stack)
+        } else {
+          sb_events = this.post_bet(small_blind_side, 'sb', 0, small_blind)
+        }
 
         sb_events.forEach(_ => events.all(_))
         bb_events.forEach(_ => events.all(_))
@@ -587,14 +612,24 @@ export class RoundN {
       } break
       case 'raise': {
 
-        let { action_side, in_action_next } = this
+        let { action, action_side, in_action_next } = this
 
         let [to_match, to_raise] = args.split('-').map(_ => num(_))
+        
+        let action_stack = action.stack
+        let total_bet = to_match + to_raise
 
-        events.all(this.change_state(action_side, 'i'))
+        if (action_stack <= total_bet) {
+          events.all(this.post_bet(action_side, 'allin', 
+                                   Math.min(action_stack, to_match), 
+                                   Math.max(0, Math.min(action_stack - to_match, to_raise))))
+          events.all(this.change_state(action_side, 'a'))
+        } else {
+          events.all(this.post_bet(action_side, 'raise', to_match, to_raise))
+          events.all(this.change_state(action_side, 'i'))
+        }
+
         events.all(this.change_state(in_action_next, '@'))
-        events.all(this.post_bet(action_side, 'raise', to_match, to_raise))
-
       } break
       case 'share': {
 

@@ -1,7 +1,59 @@
 import { it, expect } from 'vitest'
 import { RoundN } from '../src'
 
-it.only('bb raise', () => {
+it('cant post small blind', () => {
+  let r = RoundN.from_fen(`10-20 3 | d10 / d180 / d280 $!`)
+
+  r.act('deal AhAc2h2c3h3c4h5h6h7h8h')
+
+  expect(r.fen).toBe(`10-20 3 | a0 AhAc allin-0-0-10 / i160 2h2c bb-0-0-20 / @280 3h3c $!4h5h6h7h8h`)
+
+
+})
+
+it('cant post big blind', () => {
+  let r = RoundN.from_fen(`10-20 2 | d20 / d180 / d280 $!`)
+
+  r.act('deal AhAc2h2c3h3c4h5h6h7h8h')
+
+  expect(r.fen).toBe(`10-20 2 | a0 AhAc allin-0-0-20 / @180 2h2c / i270 3h3c sb-0-0-10 $!4h5h6h7h8h`)
+
+})
+
+it('cant raise allin', () => {
+
+  let r = RoundN.from_fen(`10-20 1 | @150 AhAc call-0-20 / i160 2h2c call-0-10 / i280 3h3c raise-20-0-80 $!4h5h6h7h8h`)
+  expect(r.dests.fen).toBe(`call-80 raise-80-80 fold`)
+
+  r.act(`raise 80-70`)
+  expect(r.fen).toBe(`10-20 1 | a0 AhAc allin-20-80-70 / @160 2h2c call-0-10 / i280 3h3c raise-20-0-80 $!4h5h6h7h8h`)
+
+
+  r = RoundN.from_fen(`10-20 1 | @160 AhAc call-0-20 / i160 2h2c call-0-10 / i280 3h3c raise-20-0-80 $!4h5h6h7h8h`)
+  expect(r.dests.fen).toBe(`call-80 raise-80-80 fold`)
+
+  r.act(`raise 80-80`)
+  expect(r.fen).toBe(`10-20 1 | a0 AhAc allin-20-80-80 / @160 2h2c call-0-10 / i280 3h3c raise-20-0-80 $!4h5h6h7h8h`)
+})
+
+it('cant call allin', () => {
+  let r = RoundN.from_fen(`10-20 1 | @80 AhAc call-0-20 / i160 2h2c call-0-10 / i280 3h3c raise-20-0-80 $!4h5h6h7h8h`)
+  expect(r.dests.fen).toBe(`raise-80-80 fold`)
+
+  r.act(`raise 80-0`)
+  expect(r.fen).toBe(`10-20 1 | a0 AhAc allin-20-80-0 / @160 2h2c call-0-10 / i280 3h3c raise-20-0-80 $!4h5h6h7h8h`)
+})
+
+
+it('min raise', () => {
+  let r = RoundN.from_fen(`10-20 1 | i60 AhAc raise-0-20-30 / @160 2h2c sb-0-10 / i280 3h3c bb-0-0-20 $!4h5h6h7h8h`)
+  expect(r.dests.fen).toBe(`call-40 raise-40-30 fold`)
+
+  r = RoundN.from_fen(`10-20 1 | i60 AhAc raise-0-20-30 / i160 2h2c raise-10-40-50 / @280 3h3c bb-0-0-20 $!4h5h6h7h8h`)
+  expect(r.dests.fen).toBe(`call-80 raise-80-50 fold`)
+})
+
+it('bb raise', () => {
   let r = RoundN.from_fen(`10-20 1 | i60 AhAc raise-0-20-20 / i160 2h2c call-10-30 / @280 3h3c bb-0-0-20 $!4h5h6h7h8h`)
   //expect(r.dests.fen).toBe(`call-20 raise-20-20 fold`)
   let events = r.act('raise 20-20')
@@ -27,7 +79,7 @@ it('bb call', () => {
 
   expect(r.fen).toBe(`10-20 1 | i60 AhAc raise-0-20-20 / @190 2h2c sb-0-0-10 / i280 3h3c bb-0-0-20 $!4h5h6h7h8h`)
 
-  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['c 1 i', 'c 2 @', 'a 1 raise-0-20-20', 's 1 40'])
+  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['a 1 raise-0-20-20', 's 1 40', 'c 1 i', 'c 2 @'])
 
   expect(r.dests.fen).toBe(`call-30 raise-30-20 fold`)
   events = r.act('call 30')
