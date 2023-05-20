@@ -7,7 +7,13 @@ it.only('bb raise', () => {
   let events = r.act('raise 20-20')
 
   expect(r.fen).toBe(`10-20 1 | @60 AhAc raise-0-20-20 / i160 2h2c call-10-30 / i240 3h3c raise-20-20-20 $!4h5h6h7h8h`)
+  expect(r.dests.fen).toBe(`call-20 raise-20-20 fold`)
+  events = r.act('call 20')
+  expect(r.dests.fen).toBe(`call-20 raise-20-20 fold`)
+  events = r.act('call 20')
 
+  expect(r.fen).toBe(`10-20 1 | p40 AhAc call-40-20 / p140 2h2c call-40-20 / p240 3h3c raise-20-20-20 $!4h5h6h7h8h`)
+  expect(r.dests.fen).toBe('phase')
 
 })
 
