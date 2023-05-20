@@ -100,21 +100,26 @@ function next(nb: number, s: Side) {
 
 export class PotShare {
   static win(n: Side, chips: Chips) { return new PotShare([n, chips]) }
+  static back(n: Side, chips: Chips) { return new PotShare(undefined, [n, chips]) }
 
-  constructor(readonly win?: [Side, Chips]) {}
+  constructor(readonly win?: [Side, Chips], readonly back?: [Side, Chips]) {}
 
 
   pov(nb: number, pov: Side) {
-    let { win } = this
+    let { win, back } = this
 
     let pov_win = win ? [pov_side(nb, pov, win[0]), win[1]] : undefined
-    return new PotShare(pov_win)
+    let pov_back = back ? [pov_side(nb, pov, back[0]), back[1]] : undefined
+    return new PotShare(pov_win, pov_back)
   }
 
   get fen() {
-    let { win } = this
+    let { win, back } = this
     if (win) {
       return `win-${win[0]}-${win[1]}`
+    }
+    if (back) {
+      return `back-${back[0]}-${back[1]}`
     }
   }
 }
@@ -707,10 +712,18 @@ export class RoundN {
       } break
       case 'showdown': {
 
-        let pot_winner = 1
-        let pot_chips = this.pot.chips
 
-        events.all(this.pot_share(PotShare.win(pot_winner, pot_chips)))
+        [this.pot, ...this.pot?.side_pots ?? []].forEach(pot => {
+          let { sides, chips } = pot
+          if (sides.length === 0) {
+          } else if (sides.length === 1) {
+            events.all(this.pot_share(PotShare.back(sides[0], chips)))
+          } else {
+            let pot_winner = sides[0]
+
+            events.all(this.pot_share(PotShare.win(pot_winner, chips)))
+          }
+        })
 
       } break
       case 'call': {
@@ -761,15 +774,20 @@ export class RoundN {
 
         let { shares, have_played_sides } = this
 
-        have_played_sides.forEach(side => {
-          events.all(this.change_state(side, 'd'))
-          events.all(this.collect_card(side))
-        })
 
         events.all(this.collect_pot())
 
         shares.forEach(share => {
           events.all(this.pot_share_stack_add(share))
+        })
+
+        have_played_sides.forEach(side => {
+          if (this.stacks[side - 1].stack === 0) {
+            events.all(this.change_state(side, 'e'))
+          } else {
+            events.all(this.change_state(side, 'd'))
+          }
+          events.all(this.collect_card(side))
         })
 
         events.all(this.button_next())
@@ -805,13 +823,21 @@ export class RoundN {
 
   private pot_share_stack_add(share: PotShare) {
 
-    let { win } = share
+    let { win, back } = share
 
     if (win) {
       let [side, chips] = win
 
       this.stacks[side - 1].stack += chips
       
+      return new StackAddEvent(side, chips)
+    }
+
+    if (back) {
+      let [side, chips] = back
+
+      this.stacks[side - 1].stack += chips
+
       return new StackAddEvent(side, chips)
     }
   }

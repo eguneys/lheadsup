@@ -26,6 +26,17 @@ it('everyone is allin', () => {
 
   expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['p 1 400', 'p 2 170', 'p 3 380', 'v 2 170', 'v 3 210', 'v 1 20', 'f 4h5h6h', 'h 2 2h2c', 'h 3 3h3c', 't 7h', 'r 8h', 'c 2 s', 'a 2', 'c 3 s', 'a 3', 'c 1 s', 'a 1'])
 
+  expect(r.dests.fen).toBe(`showdown`)
+
+  events = r.act('showdown')
+  expect(r.fen).toBe(`10-20 1 | s0 AhAc / s0 2h2c / s0 3h3c $ 0-side 510-123 420-13 20-1 !p4h5h6h7h8h shares win-1-510 win-1-420 back-1-20`)
+
+  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['w win-1-510', 'w win-1-420', 'w back-1-20'])
+
+  expect(r.dests.fen).toBe('share')
+
+  events = r.act('share')
+  expect(r.fen).toBe(`10-20 1 | d950 / e0 / e0 $!`)
 })
 
 it('normal allin', () => {
@@ -238,7 +249,7 @@ it('three way', () => {
 
   expect(r.pov(1).fen).toBe(`10-20 2 | d140 / d180 / d280 $!`)
 
-  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['c 1 d', 'o 1', 'c 2 d', 'o 2', 'c 3 d', 'o 3', 'C', 'S 1 60', 'b 2'])
+  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['C', 'S 1 60', 'c 1 d', 'o 1', 'c 2 d', 'o 2', 'c 3 d', 'o 3', 'b 2'])
 
   expect(r.dests.fen).toBe('deal')
 
