@@ -82,6 +82,27 @@ function next(nb: number, s: Side) {
   }
 }
 
+export class PotShare {
+  static win(n: Side, chips: Chips) { return new PotShare([n, chips]) }
+
+  constructor(readonly win?: [Side, Chips]) {}
+
+
+  pov(nb: number, pov: Side) {
+    let { win } = this
+
+    let pov_win = win ? [pov_side(nb, pov, win[0]), win[1]] : undefined
+    return new PotShare(pov_win)
+  }
+
+  get fen() {
+    let { win } = this
+    if (win) {
+      return `win-${win[0]}-${win[1]}`
+    }
+  }
+}
+
 export type StackState = string
 
 export class Call {
@@ -146,7 +167,7 @@ export class Stack {
 
     let { stack, state, bet, hand } = this
 
-    let hand_s = hand ? `${hand}` : undefined
+    let hand_s = hand ? `${hand.join('')}` : undefined
     let bet_s = bet ? bet.fen : undefined
     let ss = hand_s ? (bet_s ? `${hand_s} ${bet_s}` : hand_s) : bet_s
 
@@ -183,14 +204,18 @@ export class Dests {
   static get empty() { return new Dests() }
   static get deal() { return new Dests(true) }
   static get phase() { return new Dests(undefined, true) }
-  static get check() { return new Dests(undefined, undefined, true) }
-  static get fold() { return new Dests(undefined, undefined, undefined, true) }
-  static call(call: Call) { return new Dests(undefined, undefined, undefined, undefined, call) }
-  static raise(raise: Raise) { return new Dests(undefined, undefined, undefined, undefined, undefined, raise) }
+  static get showdown() { return new Dests(undefined, undefined, true) }
+  static get share() { return new Dests(undefined, undefined, undefined, true) }
+  static get check() { return new Dests(undefined, undefined, undefined, undefined, true) }
+  static get fold() { return new Dests(undefined, undefined, undefined, undefined, undefined, true) }
+  static call(call: Call) { return new Dests(undefined, undefined, undefined, undefined, undefined, undefined, call) }
+  static raise(raise: Raise) { return new Dests(undefined, undefined, undefined, undefined, undefined, undefined, undefined, raise) }
 
   constructor(
     public deal?: true,
     public phase?: true,
+    public showdown?: true,
+    public share?: true,
     public check?: true,
     public fold?: true,
     public call?: Call,
@@ -202,6 +227,12 @@ export class Dests {
     }
     if (this.phase) {
       return 'phase'
+    }
+    if (this.showdown) {
+      return 'showdown'
+    }
+    if (this.share) {
+      return 'share'
     }
 
     let { check, call, raise, fold } = this
@@ -250,6 +281,27 @@ export class RoundN {
     return this.stacks.length
   }
 
+  find_stack_sides_with_states(n: StackState | StackState[]) {
+    if (!Array.isArray(n)) {
+      n = [n]
+    }
+
+    return find_sides(this.stacks, _ => n.includes(_.state))
+  }
+
+  find_stacks_with_states(n: StackState | StackState[]) {
+    if (!Array.isArray(n)) {
+      n = [n]
+    }
+
+    return this.stacks.filter(_ => n.includes(_.state))
+  }
+
+  get have_played_sides() {
+    return this.find_stack_sides_with_states(['p', 'a', 'f', 'd', 'i', '@', 's'])
+  }
+
+
   get small_blind_side() {
     return next_side(this.have_played_sides, this.button)
   }
@@ -258,16 +310,20 @@ export class RoundN {
     return next_side(this.have_played_sides, this.small_blind_side)
   }
 
-  get have_played_sides() {
-    return find_sides(this.stacks, _ => _.state !== 'e')
+  get action_side() {
+    return this.find_stack_sides_with_states('@')[0]
   }
 
-  get action_side() {
-    return this.stacks.findIndex(_ => _.state === '@') + 1
+  get action() {
+    return this.stacks[this.action_side - 1]
   }
 
   get in_other_than_action_sides() {
-    return find_sides(this.stacks, _ => _.state === 'i')
+    return this.find_stack_sides_with_states('i')
+  }
+
+  get in_other_than_actions() {
+    return this.find_stacks_with_states('i')
   }
 
   get in_action_next() {
@@ -276,32 +332,20 @@ export class RoundN {
     return next_side(in_other_than_action_sides, action_side)
   }
 
-  get action() {
-    return this.stacks.find(_ => _.state === '@')
-  }
-
-  get in_other_than_actions() {
-    return this.stacks.filter(_ => _.state === 'i')
-  }
-
-  get in_other_than_action_sides() {
-    return find_sides(this.stacks, _ => _.state === 'i')
-  }
-
   get ins() {
-    return this.stacks.filter(_ => _.state === 'i' || _.state === '@')
+    return this.find_stacks_with_states(['i', '@'])
   }
 
   get in_sides() {
-    return find_sides(this.stacks, _ => _.state === 'i' || _.state === '@')
+    return this.find_stack_sides_with_states(['i', '@'])
   }
 
   get phases() {
-    return this.stacks.filter(_ => _.state === 'p')
+    return this.find_stacks_with_states('p')
   }
 
   get phase_sides() {
-    return find_sides(this.stacks, _ => _.state === 'p')
+    return this.find_stack_sides_with_states('p')
   }
 
   get have_contributed_to_pots() {
@@ -356,9 +400,12 @@ export class RoundN {
       pot = ` ${pot} `
     }
 
-    let middle = this.middle.join('')
+    let middle = this.middle?.join('') ?? ''
 
-    return `${header} | ${stacks} $${pot}!${middle}`
+    let shares = this.shares ? 
+      ` shares ${this.shares.map(_ => _.fen).join(' ')}` : ''
+
+    return `${header} | ${stacks} $${pot}!${middle}${shares}`
   }
 
   get dests() {
@@ -387,8 +434,14 @@ export class RoundN {
 
       return res
     } else {
-      if (stacks[0].state === 'd') {
+      if (this.find_stack_sides_with_states('d').length > 0) {
         return Dests.deal
+      } if (this.find_stack_sides_with_states('s').length > 0) {
+        if (this.shares) {
+          return Dests.share
+        } else {
+          return Dests.showdown
+        }
       } else {
         return Dests.phase
       }
@@ -406,40 +459,47 @@ export class RoundN {
     let big_blind = small_blind * 2
 
     let { big_blind_side } = this
-    let { action_side, in_action_next } = this
 
     switch (cmd) {
-      case 'deal':
-        let side_small_blind = next(nb, button)
-        let side_big_blind = next(nb, side_small_blind)
-        let side_action = next(nb, side_big_blind)
+      case 'deal': {
+        let { small_blind_side, big_blind_side } = this
 
-        this.stacks.forEach((_, i) => {
+        let deals = this.find_stacks_with_states('d')
+        let deal_sides = this.find_stack_sides_with_states('d')
+        let side_action_preflop = next_side(deal_sides, big_blind_side)
+
+        deal_sides.forEach((side, i) => {
+          let _ = this.stacks[side - 1]
           _.hand = args.slice(i * 4, i * 4 + 4)
 
-          events.only(i + 1, new HandEvent(i + 1, _.hand))
+          events.only(side, new HandEvent(side, _.hand))
         })
 
-        this.stacks.forEach((_, i) => {
+        deal_sides.forEach((side, i) => {
+          let _ = this.stacks[side - 1]
 
-          if (i === side_action - 1) {
-          events.all(this.change_state(i + 1, '@'))
+          if (side === side_action_preflop) {
+            events.all(this.change_state(side, '@'))
           } else {
-          events.all(this.change_state(i + 1, 'i'))
+            events.all(this.change_state(side, 'i'))
           }
         })
 
 
-        let sb_events = this.post_bet(side_small_blind, 'sb', 0, small_blind)
-        let bb_events = this.post_bet(side_big_blind, 'bb', 0, big_blind)
+        let sb_events = this.post_bet(small_blind_side, 'sb', 0, small_blind)
+        let bb_events = this.post_bet(big_blind_side, 'bb', 0, big_blind)
 
         sb_events.forEach(_ => events.all(_))
         bb_events.forEach(_ => events.all(_))
 
         this.middle = split_cards(5, args.slice(nb * 4, nb * 4 + 10))
 
-      break
-      case 'phase':
+        deal_sides.forEach((side, i) => {
+          let _ = this.stacks[side - 1]
+          _.hand = split_cards(2, args.slice(i * 4))
+        })
+      } break
+      case 'phase': {
         let { phase_sides, have_contributed_to_pots } =  this
 
       if (this.pot.length === 0) {
@@ -471,18 +531,49 @@ export class RoundN {
 
         }
 
-        break
-      case 'call':
+      } break
+      case 'showdown': {
 
+        let pot_winner = 1
+        let pot_chips = sum(this.pot)
 
-      let to_match = num(args)
-      events.all(this.change_state(action_side, 'i'))
-      events.all(this.post_bet(action_side, 'call', to_match))
+        let showdowns = this.find_stack_sides_with_states('s')
+        showdowns.forEach(side => {
+          events.others(side, new RevealHand(side, this.stacks[side - 1].hand))
+        })
 
-      events.all(this.change_state(in_action_next, '@'))
+        events.all(this.pot_share(PotShare.win(pot_winner, pot_chips)))
 
-        break
-      case 'check':
+      } break
+      case 'call': {
+
+        let { action_side, in_action_next } = this
+
+        let to_match = num(args)
+        events.all(this.change_state(action_side, 'i'))
+        events.all(this.post_bet(action_side, 'call', to_match))
+
+        events.all(this.change_state(in_action_next, '@'))
+      } break
+      case 'share': {
+
+        let { shares, have_played_sides } = this
+
+        have_played_sides.forEach(side => {
+          events.all(this.change_state(side, 'd'))
+          events.all(this.collect_card(side))
+        })
+
+        events.all(this.collect_pot())
+
+        shares.forEach(share => {
+          events.all(this.pot_share_stack_add(share))
+        })
+
+        events.all(this.button_next())
+      } break
+      case 'check': {
+        let { action_side, in_action_next } = this
         let { in_other_than_actions, in_sides } = this
 
       let everyone_has_bet = in_other_than_actions.every(_ => _.bet)
@@ -494,12 +585,51 @@ export class RoundN {
         events.all(this.change_state(in_action_next, '@'))
       }
 
-        events.all(this.post_bet(action_side, 'check'))
+      events.all(this.post_bet(action_side, 'check'))
+    }  break
+  }
 
-        break
+  return events
+}
+
+  private button_next() {
+    let deals = this.find_stack_sides_with_states('d')
+    this.button = next_side(deals, this.button)
+
+    return new ButtonEvent(this.button)
+  }
+
+  private pot_share_stack_add(share: PotShare) {
+
+    let { win } = share
+
+    if (win) {
+      let [side, chips] = win
+
+      this.stacks[side - 1].stack += chips
+      
+      return new StackAddEvent(side, chips)
     }
+  }
 
-    return events
+  private collect_pot() {
+    this.pot = []
+    this.shares = undefined
+    this.middle = undefined
+    return new CollectPot()
+  }
+
+  private collect_card(side: Side) {
+    this.stacks[side - 1].hand = undefined
+    return new CollectHand(side)
+  }
+
+  private pot_share(share: PotShare) {
+    if (!this.shares) {
+      this.shares = []
+    }
+    this.shares.push(share)
+    return new PotShareEvent(share)
   }
 
   private change_state(pov: Side, state: StackState) {
@@ -515,7 +645,86 @@ export class RoundN {
 
 export abstract class Event {}
 
+export class ButtonEvent extends Event {
+  constructor(readonly side: Side) { super() }
 
+  pov(nb: number, pov: Side) {
+    return new ButtonEvent(pov_side(nb, pov, this.side))
+  }
+
+  get fen() {
+    return `b ${this.side}`
+  }
+}
+
+export class StackAddEvent extends Event {
+  constructor(readonly side: Side, readonly delta: Chips) { super() }
+
+
+  pov(nb: number, pov: Side) {
+    return new StackAddEvent(pov_side(nb, pov, this.side), this.delta)
+  }
+
+  get fen() {
+    return `S ${this.side} ${this.delta}`
+  }
+
+}
+
+
+
+export class CollectPot extends Event {
+
+  pov(nb: number, pov: Side) {
+    return this
+  }
+
+  get fen() {
+    return `C`
+  }
+}
+
+export class CollectHand extends Event {
+  constructor(readonly side: Side) { super() }
+
+  pov(nb: number, pov: Side) {
+    return new CollectHand(pov_side(nb, pov, this.side))
+  }
+
+  get fen() {
+    return `o ${this.side}`
+  }
+
+}
+
+export class RevealHand extends Event {
+
+  constructor(readonly side: Side, readonly hand: [Card, Card]) {super()}
+
+
+  pov(nb: number, pov: Side) {
+    return new RevealHand(pov_side(nb, pov, this.side), this.hand)
+  }
+
+  get fen() {
+    return `r ${this.side} ${this.hand.join('')}`
+  }
+
+}
+
+export class PotShareEvent extends Event {
+  constructor(readonly share: PotShare) {super()}
+
+  pov(nb: number, pov: Side) {
+    return new PotShareEvent(this.share.pov(nb, pov))
+  }
+
+
+  get fen() {
+    return `w ${this.share.fen}`
+  }
+
+}
 export class RiverEvent extends Event {
   constructor(readonly river: Card) {super()}
 
@@ -637,6 +846,22 @@ export class Events {
 
     this.events = new Map()
     for (let i = 1; i <= nb; i++) { this.events.set(i, []) }
+  }
+
+  others(pov: Side, events: Event | Event[]) {
+
+    if (!Array.isArray(events)) {
+
+      events = [events]
+    }
+
+    for (let event of events) {
+      for (let i = 1; i <= this.nb; i++) {
+        if (i === pov) continue
+        this.events.get(i).push(event.pov(this.nb, i))
+      }
+    }
+
   }
 
   all(events: Event | Event[]) {

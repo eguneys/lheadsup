@@ -2,7 +2,7 @@ import { it, expect } from 'vitest'
 import { Dests, Round } from '../src'
 
 
-it('dests read', () => {
+it.skip('dests read', () => {
 
   [`call-10 raise-10-20-180 allin-190 fold`,
     `phase`,

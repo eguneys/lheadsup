@@ -85,19 +85,28 @@ it.only('three way', () => {
   events = r.act('check')
   events = r.act('phase')
 
-  expect(r.fen).toBe(`10-20 1 | s80 AhAc / s180 2h2c / s280 3h3c $ 60 0 0 0 !4h5h6h7h8h shares 1 win-60`)
+  expect(r.fen).toBe(`10-20 1 | s80 AhAc / s180 2h2c / s280 3h3c $ 60 0 0 0 !4h5h6h7h8h`)
 
 
-  expect(events.pov(1).map(_ => _.fen)).toBe(['c 1 s', 'c 2 s', 'c 3 s', 'a 1', 'a 2', 'a 3', 'p 0', 'shares 1 win-60'])
+  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['p 0', 'c 1 s', 'a 1', 'c 2 s', 'a 2', 'c 3 s', 'a 3'])
+
+  expect(r.dests.fen).toBe('showdown')
+
+  events = r.act('showdown')
+  expect(r.fen).toBe(`10-20 1 | s80 AhAc / s180 2h2c / s280 3h3c $ 60 0 0 0 !4h5h6h7h8h shares win-1-60`)
+
+  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['r 2 2h2c', 'r 3 3h3c', 'w win-1-60'])
 
   expect(r.dests.fen).toBe('share')
 
-  r.act('share')
-  expect(r.fen).toBe(`10-20 2 | d140 / d190 / d280 $!`)
+  events = r.act('share')
+  expect(r.fen).toBe(`10-20 2 | d140 / d180 / d280 $!`)
+
+  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['c 1 d', 'o 1', 'c 2 d', 'o 2', 'c 3 d', 'o 3', 'C', 'S 1 60', 'b 2'])
 
   expect(r.dests.fen).toBe('deal')
 
   r.act('deal AhAc2h2c3h3c4h5h6h7h8h')
 
-  expect(r.fen).toBe(`10-20 2 | i120 AhAc bb-0-0-20 / @190 2h2c / i270 3h3c sb-0-0-10 $!4h5h6h7h8h`)
+  expect(r.fen).toBe(`10-20 2 | i120 AhAc bb-0-0-20 / @180 2h2c / i270 3h3c sb-0-0-10 $!4h5h6h7h8h`)
 })
