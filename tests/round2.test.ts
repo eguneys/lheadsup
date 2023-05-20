@@ -1,6 +1,39 @@
 import { it, expect } from 'vitest'
 import { RoundN } from '../src'
 
+it.only('bb raise', () => {
+  let r = RoundN.from_fen(`10-20 1 | i60 AhAc raise-0-20-20 / i160 2h2c call-10-30 / @280 3h3c bb-0-0-20 $!4h5h6h7h8h`)
+  //expect(r.dests.fen).toBe(`call-20 raise-20-20 fold`)
+  let events = r.act('raise 20-20')
+
+  expect(r.fen).toBe(`10-20 1 | @60 AhAc raise-0-20-20 / i160 2h2c call-10-30 / i240 3h3c raise-20-20-20 $!4h5h6h7h8h`)
+
+
+})
+
+it('bb call', () => {
+
+  let r = RoundN.from_fen(`10-20 1 | d100 / d200 / d300 $!`)
+  let events = r.act('deal AhAc2h2c3h3c4h5h6h7h8h')
+  //expect(r.dests.fen).toBe(`call-20 raise-20-20 fold`)
+
+  events = r.act('raise 20-20')
+
+  expect(r.fen).toBe(`10-20 1 | i60 AhAc raise-0-20-20 / @190 2h2c sb-0-0-10 / i280 3h3c bb-0-0-20 $!4h5h6h7h8h`)
+
+  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['c 1 i', 'c 2 @', 'a 1 raise-0-20-20', 's 1 40'])
+
+  expect(r.dests.fen).toBe(`call-30 raise-30-20 fold`)
+  events = r.act('call 30')
+  expect(r.fen).toBe(`10-20 1 | i60 AhAc raise-0-20-20 / i160 2h2c call-10-30 / @280 3h3c bb-0-0-20 $!4h5h6h7h8h`)
+  expect(r.dests.fen).toBe(`call-20 raise-20-20 fold`)
+
+  events = r.act('call 20')
+
+  expect(r.fen).toBe(`10-20 1 | p60 AhAc raise-0-20-20 / p160 2h2c call-10-30 / p260 3h3c call-20-20 $!4h5h6h7h8h`)
+
+})
+
 it('three way', () => {
 
   let r = RoundN.from_fen(`10-20 1 | d100 / d200 / d300 $!`)
@@ -27,14 +60,14 @@ it('three way', () => {
   events = r.act('call 20')
   expect(r.fen).toBe(`10-20 1 | i80 AhAc call-0-20 / @190 2h2c sb-0-0-10 / i280 3h3c bb-0-0-20 $!4h5h6h7h8h`)
 
-  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['c 1 i', 'a 1 call-0-20', 's 1 20', 'c 2 @'])
+  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['a 1 call-0-20', 's 1 20', 'c 1 i', 'c 2 @'])
 
   expect(r.dests.fen).toBe(`call-10 raise-10-20 fold`)
 
   events = r.act('call 10')
   expect(r.fen).toBe(`10-20 1 | i80 AhAc call-0-20 / i180 2h2c call-10-10 / @280 3h3c bb-0-0-20 $!4h5h6h7h8h`)
 
-  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['c 2 i', 'a 2 call-10-10', 's 2 10', 'c 3 @'])
+  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['a 2 call-10-10', 's 2 10', 'c 2 i', 'c 3 @'])
 
   expect(r.dests.fen).toBe(`check raise-0-20 fold`)
 

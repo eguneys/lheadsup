@@ -129,6 +129,12 @@ export class Raise {
 
 export class Bet {
 
+  static from_fen = (fen: string) => {
+    let [desc, previous, match, raise] = fen.split('-')
+
+    return new Bet(desc, num(previous), match ? num(match) : undefined, raise ? num(raise) : undefined)
+  }
+
   constructor(readonly desc: BetDescription,
               readonly previous: Chips,
               readonly match?: Chips,
@@ -153,9 +159,15 @@ export class Stack {
 
   static from_fen = (fen: string) => {
     let state = fen.trim()[0]
-    let [stack, bet] = fen.trim().slice(1).split(' ')
+    let [stack, hand, bet] = fen.trim().slice(1).split(' ')
 
-    return new Stack(state, num(stack), undefined, bet)
+    if (hand.length === 4 && hand !== 'fold') {
+    } else {
+      bet = hand
+      hand = undefined
+    }
+
+    return new Stack(state, num(stack), hand ? split_cards(2, hand) : undefined, bet ? Bet.from_fen(bet) : undefined)
   }
 
   constructor(
@@ -557,11 +569,32 @@ export class RoundN {
 
         let { action_side, in_action_next } = this
 
+        let { ins, in_sides } = this
+
+
         let to_match = num(args)
-        events.all(this.change_state(action_side, 'i'))
         events.all(this.post_bet(action_side, 'call', to_match))
 
+        let everyone_has_bet = ins.every(_ => _.bet)
+        let all_bets_equal = ins.every(_ => _.bet.total === ins[0].bet.total)
+        let bb_has_acted = !ins.find(_ => _.bet.desc === 'bb')
+        if (everyone_has_bet && all_bets_equal && bb_has_acted) {
+          in_sides.forEach(side => events.all(this.change_state(side, 'p')))
+        } else {
+          events.all(this.change_state(action_side, 'i'))
+          events.all(this.change_state(in_action_next, '@'))
+        }
+      } break
+      case 'raise': {
+
+        let { action_side, in_action_next } = this
+
+        let [to_match, to_raise] = args.split('-').map(_ => num(_))
+
+        events.all(this.change_state(action_side, 'i'))
         events.all(this.change_state(in_action_next, '@'))
+        events.all(this.post_bet(action_side, 'raise', to_match, to_raise))
+
       } break
       case 'share': {
 
