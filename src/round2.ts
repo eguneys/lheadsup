@@ -574,13 +574,6 @@ export class RoundN {
         let deal_sides = this.find_stack_sides_with_states('d')
         let side_action_preflop = next_side(deal_sides, big_blind_side)
 
-        deal_sides.forEach((side, i) => {
-          let _ = this.stacks[side - 1]
-          _.hand = args.slice(i * 4, i * 4 + 4)
-
-          events.only(side, new HandEvent(side, _.hand))
-        })
-
         let big_blind_stack = this.stacks[big_blind_side - 1].stack
         let big_blind_all_in = big_blind_stack <= big_blind
 
@@ -624,6 +617,8 @@ export class RoundN {
         deal_sides.forEach((side, i) => {
           let _ = this.stacks[side - 1]
           _.hand = split_cards(2, args.slice(i * 4))
+
+          events.only(side, new HandEvent(side, _.hand))
         })
 
 
@@ -673,9 +668,23 @@ export class RoundN {
 
           let showdowns = this.find_stack_sides_with_states('s')
           showdowns.forEach(side => {
-            events.others(side, new RevealHand(side, this.stacks[side - 1].hand))
+            events.others(side, new HandEvent(side, this.stacks[side - 1].hand))
           })
         } else if (no_player_left) {
+
+          let allins = this.find_stack_sides_with_states('a')
+          allins.forEach(side => {
+            events.others(side, new HandEvent(side, this.stacks[side - 1].hand))
+          })
+
+
+          if (phase === 'p') {
+            events.all(new TurnEvent(this.middle[3]))
+            events.all(new RiverEvent(this.middle[4]))
+          } else if (phase === 'f') {
+            events.all(new RiverEvent(this.middle[4]))
+          } 
+
           [...phase_sides, ...allin_sides].forEach(side => {
             events.all(this.change_state(side, 's'))
             events.all(this.post_bet(side))
@@ -901,21 +910,6 @@ export class CollectHand extends Event {
 
 }
 
-export class RevealHand extends Event {
-
-  constructor(readonly side: Side, readonly hand: [Card, Card]) {super()}
-
-
-  pov(nb: number, pov: Side) {
-    return new RevealHand(pov_side(nb, pov, this.side), this.hand)
-  }
-
-  get fen() {
-    return `r ${this.side} ${this.hand.join('')}`
-  }
-
-}
-
 export class PotShareEvent extends Event {
   constructor(readonly share: PotShare) {super()}
 
@@ -1025,7 +1019,7 @@ export class HandEvent extends Event {
   }
 
   get fen() {
-    return `h ${this.side} ${this.hand}`
+    return `h ${this.side} ${this.hand.join('')}`
   }
 }
 

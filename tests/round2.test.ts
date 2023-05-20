@@ -3,6 +3,8 @@ import { RoundN } from '../src'
 
 it('everyone is allin', () => {
 
+  let events
+
   let r = RoundN.from_fen(`10-20 1 | @380 AhAc call-0-20 / i160 2h2c call-0-10 / i280 3h3c raise-20-0-80 $!p4h5h6h7h8h`)
   expect(r.dests.fen).toBe(`call-80 raise-80-80 fold`)
 
@@ -16,10 +18,14 @@ it('everyone is allin', () => {
 
   expect(r.dests.fen).toBe(`phase`)
 
-  r.act(`phase`)
+  events = r.act(`phase`)
 
   // 400 170 380
   expect(r.fen).toBe(`10-20 1 | s0 AhAc / s0 2h2c / s0 3h3c $ 0-side 510-123 420-13 20-1 !p4h5h6h7h8h`)
+
+
+  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['p 1 400', 'p 2 170', 'p 3 380', 'f 4h5h6h', 'h 2 2h2c', 'h 3 3h3c', 't 7h', 'r 8h', 'c 2 s', 'a 2', 'c 3 s', 'a 3', 'c 1 s', 'a 1'])
+
 })
 
 it('normal allin', () => {
@@ -142,9 +148,9 @@ it('three way', () => {
   expect(r.pov(2).fen).toBe(`10-20 3 | i190 2h2c sb-0-0-10 / i280 bb-0-0-20 / @100 $!`)
   expect(r.pov(3).fen).toBe(`10-20 2 | i280 3h3c bb-0-0-20 / @100 / i190 sb-0-0-10 $!`)
 
-  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['h 1 AhAc', 'c 1 @', 'c 2 i', 'c 3 i', 'a 2 sb-0-0-10','s 2 10', 'a 3 bb-0-0-20', 's 3 20'])
-  expect(events.pov(2).map(_ => _.fen)).toStrictEqual(['h 1 2h2c', 'c 3 @', 'c 1 i', 'c 2 i', 'a 1 sb-0-0-10', 's 1 10', 'a 2 bb-0-0-20', 's 2 20'])
-  expect(events.pov(3).map(_ => _.fen)).toStrictEqual(['h 1 3h3c', 'c 2 @', 'c 3 i', 'c 1 i', 'a 3 sb-0-0-10', 's 3 10', 'a 1 bb-0-0-20', 's 1 20'])
+  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['c 1 @', 'c 2 i', 'c 3 i', 'a 2 sb-0-0-10','s 2 10', 'a 3 bb-0-0-20', 's 3 20', 'h 1 AhAc'])
+  expect(events.pov(2).map(_ => _.fen)).toStrictEqual(['c 3 @', 'c 1 i', 'c 2 i', 'a 1 sb-0-0-10', 's 1 10', 'a 2 bb-0-0-20', 's 2 20', 'h 1 2h2c'])
+  expect(events.pov(3).map(_ => _.fen)).toStrictEqual(['c 2 @', 'c 3 i', 'c 1 i', 'a 3 sb-0-0-10', 's 3 10', 'a 1 bb-0-0-20', 's 1 20', 'h 1 3h3c'])
 
   expect(r.dests.fen).toBe(`call-20 raise-20-20 fold`)
 
@@ -213,7 +219,7 @@ it('three way', () => {
 
   expect(r.pov(1).fen).toBe(`10-20 1 | s80 AhAc / s180 2h2c / s280 3h3c $ 60-123 !4h5h6h7h8h`)
 
-  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['c 1 s', 'a 1', 'c 2 s', 'a 2', 'c 3 s', 'a 3', 'r 2 2h2c', 'r 3 3h3c'])
+  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['c 1 s', 'a 1', 'c 2 s', 'a 2', 'c 3 s', 'a 3', 'h 2 2h2c', 'h 3 3h3c'])
 
   expect(r.dests.fen).toBe('showdown')
 
