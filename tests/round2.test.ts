@@ -1,6 +1,78 @@
 import { it, expect } from 'vitest'
 import { RoundN } from '../src'
 
+it('bb folds', () => {
+  let r = RoundN.from_fen(`10-20 1 | i60 AhAc raise-0-20-20 / @190 2h2c sb-0-0-10 / i280 3h3c bb-0-0-20 $!p4h5h6h7h8h`)
+  expect(r.dests.fen).toBe('call-30 raise-30-20 fold')
+  r.act('call 30')
+
+  expect(r.dests.fen).toBe('call-20 raise-20-20 fold')
+  r.act('fold')
+  expect(r.fen).toBe(`10-20 1 | p60 AhAc raise-0-20-20 / p160 2h2c call-10-30 / f280 3h3c fold-20 $!p4h5h6h7h8h`)
+
+})
+
+
+it('sb folds', () => {
+
+  let r = RoundN.from_fen(`10-20 1 | i60 AhAc raise-0-20-20 / @190 2h2c sb-0-0-10 / i280 3h3c bb-0-0-20 $!p4h5h6h7h8h`)
+
+  r.act('fold')
+
+  expect(r.fen).toBe(`10-20 1 | i60 AhAc raise-0-20-20 / f190 2h2c fold-10 / @280 3h3c bb-0-0-20 $!p4h5h6h7h8h`)
+
+  expect(r.dests.fen).toBe(`call-20 raise-20-20 fold`)
+
+  r.act('call 20')
+
+  expect(r.fen).toBe(`10-20 1 | p60 AhAc raise-0-20-20 / f190 2h2c fold-10 / p260 3h3c call-20-20 $!p4h5h6h7h8h`)
+
+  expect(r.dests.fen).toBe('phase')
+
+  r.act('phase')
+
+  expect(r.fen).toBe(`10-20 1 | i60 AhAc / f190 2h2c / @260 3h3c $ 90-13 !f4h5h6h7h8h`)
+
+  expect(r.dests.fen).toBe('check raise-0-20 fold')
+  r.act('check')
+  expect(r.dests.fen).toBe('check raise-0-20 fold')
+
+
+  r.act('check')
+
+  expect(r.fen).toBe(`10-20 1 | p60 AhAc check-0 / f190 2h2c / p260 3h3c check-0 $ 90-13 !f4h5h6h7h8h`)
+
+  expect(r.dests.fen).toBe('phase')
+  r.act('phase')
+
+  expect(r.dests.fen).toBe('check raise-0-20 fold')
+  r.act('check')
+  expect(r.dests.fen).toBe('check raise-0-20 fold')
+  r.act('check')
+  expect(r.dests.fen).toBe('phase')
+  r.act('phase')
+  expect(r.dests.fen).toBe('check raise-0-20 fold')
+  r.act('check')
+  expect(r.dests.fen).toBe('check raise-0-20 fold')
+  r.act('check')
+  expect(r.dests.fen).toBe('phase')
+  r.act('phase')
+
+
+  expect(r.fen).toBe(`10-20 1 | s60 AhAc / f190 2h2c / s260 3h3c $ 90-13 !r4h5h6h7h8h`)
+  expect(r.dests.fen).toBe('showdown')
+
+  r.act('showdown')
+  expect(r.fen).toBe(`10-20 1 | s60 AhAc / f190 2h2c / s260 3h3c $ 90-13 !r4h5h6h7h8h shares win-1-90`)
+
+  expect(r.dests.fen).toBe('share')
+
+  r.act('share')
+
+  expect(r.fen).toBe(`10-20 1 | x150 / x190 / x260 $!`)
+  expect(r.dests.fen).toBe('fin')
+})
+
 it('everyone is allin', () => {
 
   let events
@@ -24,7 +96,7 @@ it('everyone is allin', () => {
   expect(r.fen).toBe(`10-20 1 | s0 AhAc / s0 2h2c / s0 3h3c $ 0-side 510-123 420-13 20-1 !p4h5h6h7h8h`)
 
 
-  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['p 1 400', 'p 2 170', 'p 3 380', 'v 2 170', 'v 3 210', 'v 1 20', 'f 4h5h6h', 'h 2 2h2c', 'h 3 3h3c', 't 7h', 'r 8h', 'c 2 s', 'a 2', 'c 3 s', 'a 3', 'c 1 s', 'a 1'])
+  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['p 1 400', 'p 2 170', 'p 3 380', 'v 2 170', 'v 3 210', 'v 1 20', 'a 2', 'a 3', 'a 1', 'f 4h5h6h', 'h 2 2h2c', 'h 3 3h3c', 't 7h', 'r 8h', 'c 2 s', 'c 3 s', 'c 1 s'])
 
   expect(r.dests.fen).toBe(`showdown`)
 
@@ -36,7 +108,7 @@ it('everyone is allin', () => {
   expect(r.dests.fen).toBe('share')
 
   events = r.act('share')
-  expect(r.fen).toBe(`10-20 1 | f950 / e0 / e0 $!`)
+  expect(r.fen).toBe(`10-20 1 | x950 / e0 / e0 $!`)
 
   expect(r.dests.fen).toBe('fin')
 })
@@ -49,7 +121,6 @@ it('normal allin', () => {
   r.act(`raise 80-300`)
   expect(r.fen).toBe(`10-20 1 | a0 AhAc allin-20-80-300 / @160 2h2c call-0-10 / i280 3h3c raise-20-0-80 $!4h5h6h7h8h`)
   expect(r.dests.fen).toBe(`raise-390-300 fold`)
-
 })
 
 
@@ -194,7 +265,7 @@ it('three way', () => {
 
   expect(r.pov(1).fen).toBe(`10-20 1 | i80 AhAc / i180 / @280 $ 60-123 !4h5h6h`)
 
-  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['p 1 20', 'p 2 20', 'p 3 20', 'f 4h5h6h', 'c 1 i', 'a 1', 'c 2 i', 'a 2', 'c 3 @', 'a 3'])
+  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['p 1 20', 'p 2 20', 'p 3 20', 'a 1', 'a 2', 'a 3',  'f 4h5h6h', 'c 1 i', 'c 2 i', 'c 3 @'])
 
   expect(r.dests.fen).toBe(`check raise-0-20 fold`)
 
@@ -208,7 +279,7 @@ it('three way', () => {
 
   expect(r.pov(1).fen).toBe(`10-20 1 | i80 AhAc / i180 / @280 $ 60-123 !4h5h6h7h`)
 
-  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['t 7h', 'c 1 i', 'a 1', 'c 2 i', 'a 2', 'c 3 @', 'a 3'])
+  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['a 1', 'a 2', 'a 3', 't 7h', 'c 1 i', 'c 2 i', 'c 3 @'])
 
   expect(r.dests.fen).toBe('check raise-0-20 fold')
 
@@ -221,7 +292,7 @@ it('three way', () => {
   expect(r.fen).toBe(`10-20 1 | i80 AhAc / i180 2h2c / @280 3h3c $ 60-123 !r4h5h6h7h8h`)
 
   expect(r.pov(1).fen).toBe(`10-20 1 | i80 AhAc / i180 / @280 $ 60-123 !4h5h6h7h8h`)
-  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['r 8h', 'c 1 i', 'a 1', 'c 2 i', 'a 2', 'c 3 @', 'a 3'])
+  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['a 1', 'a 2', 'a 3', 'r 8h', 'c 1 i', 'c 2 i', 'c 3 @'])
 
   events = r.act('check')
   events = r.act('check')
@@ -232,7 +303,7 @@ it('three way', () => {
 
   expect(r.pov(1).fen).toBe(`10-20 1 | s80 AhAc / s180 2h2c / s280 3h3c $ 60-123 !4h5h6h7h8h`)
 
-  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['c 1 s', 'a 1', 'c 2 s', 'a 2', 'c 3 s', 'a 3', 'h 2 2h2c', 'h 3 3h3c'])
+  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['a 1', 'a 2', 'a 3', 'c 1 s', 'c 2 s', 'c 3 s', 'h 2 2h2c', 'h 3 3h3c'])
 
   expect(r.dests.fen).toBe('showdown')
 
@@ -247,11 +318,11 @@ it('three way', () => {
   expect(r.dests.fen).toBe('share')
 
   events = r.act('share')
-  expect(r.fen).toBe(`10-20 2 | f140 / f180 / f280 $!`)
+  expect(r.fen).toBe(`10-20 1 | x140 / x180 / x280 $!`)
 
-  expect(r.pov(1).fen).toBe(`10-20 2 | f140 / f180 / f280 $!`)
+  expect(r.pov(1).fen).toBe(`10-20 1 | x140 / x180 / x280 $!`)
 
-  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['C', 'S 1 60', 'c 1 f', 'o 1', 'c 2 f', 'o 2', 'c 3 f', 'o 3', 'b 2'])
+  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['C', 'S 1 60', 'c 1 x', 'o 1', 'c 2 x', 'o 2', 'c 3 x', 'o 3'])
 
   expect(r.dests.fen).toBe('fin')
 })

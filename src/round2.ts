@@ -2,6 +2,7 @@ function split_cards(nb: number, n: string) {
   return [...Array(nb).keys()].map(_ => n.slice(_ * 2, _ * 2 + 2))
 }
 
+const all_equal = arr => arr.every( v => v === arr[0] )
 
 function sum(a: number[]) {
   return a.reduce((a, b) => a + b, 0)
@@ -307,8 +308,8 @@ export class Pot {
     public sides: Side[],
     public side_pots?: Pot[]) {}
 
-  add_bet(side: Side, bet: Bet) {
-    if (!this.sides.includes(side)) {
+  add_bet(side: Side, bet: Bet, folded?: true) {
+    if (!folded && !this.sides.includes(side)) {
       this.sides.push(side)
     }
     this.chips += bet.total
@@ -460,6 +461,10 @@ export class RoundN {
     return this.find_stack_sides_with_states('a')
   }
 
+  get fold_sides() {
+    return this.find_stack_sides_with_states('f')
+  }
+
 
   get have_contributed_to_pots() {
     return this.stacks.filter(_ => _.bet)
@@ -553,7 +558,7 @@ export class RoundN {
 
       return res
     } else {
-      if (this.find_stack_sides_with_states('f').length > 0) {
+      if (this.find_stack_sides_with_states('x').length > 0) {
         return Dests.fin
       } else if (this.find_stack_sides_with_states('d').length > 0) {
         return Dests.deal
@@ -640,7 +645,7 @@ export class RoundN {
         this.phase = 'p'
       } break
       case 'phase': {
-        let { allin_sides, phase_sides, phase } =  this
+        let { fold_sides, allin_sides, phase_sides, phase } =  this
 
         let no_player_left = phase_sides.length === 0
 
@@ -654,18 +659,29 @@ export class RoundN {
           events.all(this.pot.add_bet(side, _.bet))
         })
 
-
-        let decrease = 0
-        allin_sides.sort((a, b) => {
-          let abet = this.stacks[a - 1].bet.total
-          let bbet = this.stacks[b - 1].bet.total
-          return abet - bbet
-        }).forEach(side => {
-          let chips = this.stacks[side - 1].bet.total - decrease
-          events.all(this.pot.side_pot([side], chips))
-          decrease += chips
+        fold_sides.forEach(side => {
+          let _ = this.stacks[side - 1]
+          if (_.bet) {
+            events.all(this.pot.add_bet(side, _.bet, true))
+          }
         })
 
+        {
+          let decrease = 0
+          allin_sides.sort((a, b) => {
+            let abet = this.stacks[a - 1].bet.total
+            let bbet = this.stacks[b - 1].bet.total
+            return abet - bbet
+          }).forEach(side => {
+            let chips = this.stacks[side - 1].bet.total - decrease
+            events.all(this.pot.side_pot([side], chips))
+            decrease += chips
+          })
+        }
+
+        [...allin_sides, ...fold_sides, ...phase_sides].forEach(side => {
+          events.all(this.post_bet(side))
+        })
 
         if (phase === 'p') {
           events.all(new FlopEvent(this.middle.slice(0, 3)))
@@ -678,7 +694,6 @@ export class RoundN {
         if (phase === 'r') {
           phase_sides.forEach(side => {
             events.all(this.change_state(side, 's'))
-            events.all(this.post_bet(side))
           })
 
           let showdowns = this.find_stack_sides_with_states('s')
@@ -702,8 +717,8 @@ export class RoundN {
 
           [...phase_sides, ...allin_sides].forEach(side => {
             events.all(this.change_state(side, 's'))
-            events.all(this.post_bet(side))
           })
+
         } else {
           phase_sides.forEach(side => {
             if (side === big_blind_side) {
@@ -711,7 +726,6 @@ export class RoundN {
             } else {
               events.all(this.change_state(side, 'i'))
             }
-            events.all(this.post_bet(side))
           })
 
           this.phase = next_phase(this.phase)
@@ -792,12 +806,10 @@ export class RoundN {
           if (this.stacks[side - 1].stack === 0) {
             events.all(this.change_state(side, 'e'))
           } else {
-            events.all(this.change_state(side, 'f'))
+            events.all(this.change_state(side, 'x'))
           }
           events.all(this.collect_card(side))
         })
-
-        events.all(this.button_next())
 
         this.phase = undefined
       } break
@@ -816,17 +828,27 @@ export class RoundN {
 
       events.all(this.post_bet(action_side, 'check'))
     }  break
+    case 'fold': {
+      let { action_side, in_action_next } = this
+
+      let { in_other_than_actions, in_other_than_action_sides, in_sides } = this
+
+      let everyone_has_bet = in_other_than_actions.every(_ => _.bet)
+      let bets_matched = all_equal(in_other_than_actions.map(_ => _.bet?.total))
+
+      if (everyone_has_bet && bets_matched) {
+        in_other_than_action_sides.forEach(side => events.all(this.change_state(side, 'p')))
+      } else {
+        events.all(this.change_state(in_action_next, '@'))
+      }
+
+      events.all(this.change_state(action_side, 'f'))
+      events.all(this.post_bet(action_side, 'fold'))
+    } break
   }
 
   return events
 }
-
-  private button_next() {
-    let deals = this.find_stack_sides_with_states('f')
-    this.button = next_side(deals, this.button)
-
-    return new ButtonEvent(this.button)
-  }
 
   private pot_share_stack_add(share: PotShare) {
 
