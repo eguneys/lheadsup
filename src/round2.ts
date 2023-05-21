@@ -247,6 +247,7 @@ export class Dests {
   static call(call: Call) { return new Dests(undefined, undefined, undefined, undefined, undefined, undefined, call) }
   static raise(raise: Raise) { return new Dests(undefined, undefined, undefined, undefined, undefined, undefined, undefined, raise) }
   static get fin() { return new Dests(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, true) }
+  static get win() { return new Dests(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, true) }
 
   constructor(
     public deal?: true,
@@ -257,9 +258,13 @@ export class Dests {
     public fold?: true,
     public call?: Call,
     public raise?: Raise,
-    public fin?: true) {}
+    public fin?: true,
+    public win?: true) {}
 
   get fen() {
+    if (this.win) {
+      return 'win'
+    }
     if (this.fin) {
       return 'fin'
     }
@@ -558,7 +563,9 @@ export class RoundN {
 
       return res
     } else {
-      if (this.find_stack_sides_with_states('x').length > 0) {
+      if (this.find_stack_sides_with_states('w').length > 0) {
+        return Dests.win
+      } else if (this.find_stack_sides_with_states('x').length > 0) {
         return Dests.fin
       } else if (this.find_stack_sides_with_states('d').length > 0) {
         return Dests.deal
@@ -647,7 +654,9 @@ export class RoundN {
       case 'phase': {
         let { fold_sides, allin_sides, phase_sides, phase } =  this
 
-        let no_player_left = phase_sides.length === 0
+        let no_player_left = phase_sides.length <= 1
+        let allins = this.find_stack_sides_with_states('a')
+        let everyone_has_folded = no_player_left && allins.length === 0
 
         if (!this.pot) {
           this.pot = Pot.empty()
@@ -683,13 +692,15 @@ export class RoundN {
           events.all(this.post_bet(side))
         })
 
-        if (phase === 'p') {
-          events.all(new FlopEvent(this.middle.slice(0, 3)))
-        } else if (phase === 'f') {
-          events.all(new TurnEvent(this.middle[3]))
-        } else if (phase === 't') {
-          events.all(new RiverEvent(this.middle[4]))
-        } 
+        if (!everyone_has_folded) {
+          if (phase === 'p') {
+            events.all(new FlopEvent(this.middle.slice(0, 3)))
+          } else if (phase === 'f') {
+            events.all(new TurnEvent(this.middle[3]))
+          } else if (phase === 't') {
+            events.all(new RiverEvent(this.middle[4]))
+          } 
+        }
         
         if (phase === 'r') {
           phase_sides.forEach(side => {
@@ -702,26 +713,38 @@ export class RoundN {
           })
         } else if (no_player_left) {
 
-          let allins = this.find_stack_sides_with_states('a')
-          allins.forEach(side => {
-            events.others(side, new HandEvent(side, this.stacks[side - 1].hand))
-          })
+          if (everyone_has_folded) {
+
+            phase_sides.forEach(side => {
+              events.all(this.change_state(side, 'w'))
+            })
 
 
-          if (phase === 'p') {
-            events.all(new TurnEvent(this.middle[3]))
-            events.all(new RiverEvent(this.middle[4]))
-          } else if (phase === 'f') {
-            events.all(new RiverEvent(this.middle[4]))
-          } 
+          } else {
+            allins.forEach(side => {
+              events.others(side, new HandEvent(side, this.stacks[side - 1].hand))
+            })
 
-          [...phase_sides, ...allin_sides].forEach(side => {
-            events.all(this.change_state(side, 's'))
-          })
 
+            if (phase === 'p') {
+              events.all(new TurnEvent(this.middle[3]))
+              events.all(new RiverEvent(this.middle[4]))
+            } else if (phase === 'f') {
+              events.all(new RiverEvent(this.middle[4]))
+            } 
+
+            [...phase_sides, ...allin_sides].forEach(side => {
+              events.all(this.change_state(side, 's'))
+            })
+
+          }
         } else {
+
+          let big_blind_has_folded = this.stacks[big_blind_side - 1].state === 'f'
+          let next_action_side = big_blind_has_folded ? next_side(phase_sides, big_blind_side) : big_blind_side
+
           phase_sides.forEach(side => {
-            if (side === big_blind_side) {
+            if (side === next_action_side) {
               events.all(this.change_state(side, '@'))
             } else {
               events.all(this.change_state(side, 'i'))
