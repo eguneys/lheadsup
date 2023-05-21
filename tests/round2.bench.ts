@@ -1,4 +1,4 @@
-import { it, expect, bench } from 'vitest'
+import { describe, it, expect, bench } from 'vitest'
 import { RoundN, shuffle, make_deal } from '../src'
 
 function choose_a_dest(r: RoundN) {
@@ -59,9 +59,25 @@ function choose_a_dest(r: RoundN) {
   return res[0]
 }
 
-bench('works', () => {
+function play(fen: string) {
 
-  let r = RoundN.from_fen(`10-20 1 | d100 / d100 / d280 $!`)
+  let r = RoundN.from_fen(fen)
+
+  for (let i = 0; i < 60; i++) {
+    let dest = choose_a_dest(r)
+    if (dest === 'fin') {
+      return
+    } else {
+      r.act(dest)
+    } 
+  }
+  throw 3
+
+}
+
+function examine_play(fen: string) {
+
+  let r = RoundN.from_fen(fen)
 
   let fens = []
   let dests = []
@@ -70,14 +86,14 @@ bench('works', () => {
     dests.push(dest)
     fens.push(r.fen)
     if (dest === 'fin') {
-      console.log(i, r.fen)
+      //console.log(i, r.fen)
       return
     } else {
       let pre_fen = r.fen
       try {
         r.act(dest)
       } catch (e) {
-        if (i < 99) {
+        if (i < 10) {
           console.log(i, pre_fen, r.fen, dest, dests, fens)
         }
         throw e
@@ -86,4 +102,51 @@ bench('works', () => {
   }
   //console.log(r.fen, dests, fens)
   throw 3
+}
+
+
+describe('equal stacks', () => {
+
+  bench('nine way equal stacks', () => {
+    play(`10-20 1 | d300 / d300 / d300 / d300 / d300 / d300 / d300 / d300 / d300 $!`)
+  })
+
+  bench('six way equal stacks', () => {
+    play(`10-20 1 | d300 / d300 / d300 / d300 / d300 / d300 $!`)
+  })
+
+  bench('three way equal stacks', () => {
+    play(`10-20 1 | d300 / d300 / d300 $!`)
+  })
+
+  bench('three way', () => {
+    play(`10-20 1 | d100 / d100 / d280 $!`)
+  })
+
+  bench('headsup', () => {
+    play(`10-20 1 | d100 / d100 $!`)
+  })
+
+})
+
+describe('uneven stacks', () => {
+  bench('nine way uneven stacks', () => {
+    play(`10-20 1 | d100 / d200 / d300 / d400 / d500 / d600 / d700 / d800 / d900 $!`)
+  })
+
+
+  bench('six way uneven stacks', () => {
+    play(`10-20 1 | d100 / d200 / d300 / d400 / d500 / d600 $!`)
+  })
+
+
+
+  bench('three way uneven', () => {
+    examine_play(`10-20 1 | d100 / d200 / d300 $!`)
+  })
+
+
+  bench('headsup uneven', () => {
+    play(`10-20 1 | d100 / d200 $!`)
+  })
 })

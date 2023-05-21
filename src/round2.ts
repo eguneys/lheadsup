@@ -309,10 +309,12 @@ export class Pot {
 
   static from_fen = (fen: string) => {
 
-    let [main, side_pots] = fen.trim().split('side')
+    let [main, side_pots_s] = fen.trim().split('side')
     let [chips, sides] = main.split('-')
 
-    return new Pot(num(chips), sides.split('').map(_ => num(_)))
+    let side_pots = side_pots_s?.trim().split(' ').map(_ => Pot.from_fen(_))
+
+    return new Pot(num(chips), sides.split('').map(_ => num(_)), side_pots)
   }
 
   static empty = () => new Pot(0, [])
@@ -322,7 +324,17 @@ export class Pot {
     public sides: Side[],
     public side_pots?: Pot[]) {}
 
+  exclude_fold(side: Side) {
+    this.sides = this.sides.filter(_ => _ !== side)
+  }
+
   add_bet(side: Side, bet: Bet, folded?: true) {
+
+    if (folded) {
+      this.exclude_fold(side)
+      this.side_pots?.forEach(_ => _.exclude_fold(side))
+    }
+
     if (!folded && !this.sides.includes(side)) {
       this.sides.push(side)
     }
@@ -673,8 +685,11 @@ export class RoundN {
 
         let no_player_left = phase_sides.length <= 1
         let allins = this.find_stack_sides_with_states('a')
+        let allin_this_hand_sides = allin_sides.filter(side => this.stacks[side - 1].bet)
+
         let everyone_has_folded = no_player_left && allins.length === 0
-        let everyone_has_folded_to_allin = phase_sides.length === 0 && allins.length === 1
+        let atleast_two_allins = allins.length > 1
+        let everyone_has_folded_to_allin = phase_sides.length === 0 && allin_this_hand_sides.length === 1
 
         if (!this.pot) {
           this.pot = Pot.empty()
@@ -696,8 +711,9 @@ export class RoundN {
         })
 
         if (!everyone_has_folded_to_allin) {
+
           let decrease = 0
-          allin_sides.sort((a, b) => {
+          allin_this_hand_sides.sort((a, b) => {
             let abet = this.stacks[a - 1].bet.total
             let bbet = this.stacks[b - 1].bet.total
             return abet - bbet
@@ -723,7 +739,8 @@ export class RoundN {
         }
         
         if (no_player_left) {
-          if (everyone_has_folded_to_allin) {
+
+          if (!atleast_two_allins && everyone_has_folded_to_allin) {
             allin_sides.forEach(side => {
               events.all(this.change_state(side, 'w'))
             })
@@ -887,13 +904,22 @@ export class RoundN {
 
       let { in_other_than_actions, in_other_than_action_sides, in_sides } = this
 
+      let allins = this.find_stacks_with_states('a')
+
       let everyone_has_bet = in_other_than_actions.every(_ => _.bet)
       let bets_matched = all_equal(in_other_than_actions.map(_ => _.bet?.total))
 
       if (in_other_than_actions.length === 1) {
         in_other_than_action_sides.forEach(side => events.all(this.change_state(side, 'p')))
       } else if (everyone_has_bet && bets_matched) {
-        in_other_than_action_sides.forEach(side => events.all(this.change_state(side, 'p')))
+        let max_allin_bet = Math.max(...allins.map(_ => _.bet?.total ?? 0))
+        let max_ins_bet = Math.max(...in_other_than_actions.map(_ => _.bet!.total))
+        if (in_other_than_actions.length === 0) {
+        } else if (max_ins_bet >= max_allin_bet) {
+          in_other_than_action_sides.forEach(side => events.all(this.change_state(side, 'p')))
+        } else {
+          events.all(this.change_state(in_action_next, '@'))
+        }
       } else {
         events.all(this.change_state(in_action_next, '@'))
       }

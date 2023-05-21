@@ -1,7 +1,7 @@
 import { it, expect } from 'vitest'
 import { Dests, Round } from '../src'
 
-
+/*
 it.skip('dests read', () => {
 
   [`call-10 raise-10-20-180 allin-190 fold`,
@@ -9,6 +9,7 @@ it.skip('dests read', () => {
     `check raise-0-20-80 allin-80 fold`]
     .forEach(_ => expect(Dests.from_fen(_).fen).toBe(_))
 })
+*/
 
 it('raise after check', () => {
 

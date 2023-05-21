@@ -37,11 +37,11 @@ it('everyone is allin or fold in phase', () => {
   expect(r.dests.fen).toBe('phase')
   r.act('phase')
 
-  expect(r.fen).toBe('10-20 1 | w0 KsJc / f10 7d2c / f260 Qh3h $ 210-12 !r9cTh4c9dJh')
+  expect(r.fen).toBe('10-20 1 | w0 KsJc / f10 7d2c / f260 Qh3h $ 210-1 !r9cTh4c9dJh')
   expect(r.dests.fen).toBe('win')
 
   r.act('win')
-  expect(r.fen).toBe('10-20 1 | w0 KsJc / f10 7d2c / f260 Qh3h $ 210-12 !r9cTh4c9dJh shares win-1-210')
+  expect(r.fen).toBe('10-20 1 | w0 KsJc / f10 7d2c / f260 Qh3h $ 210-1 !r9cTh4c9dJh shares win-1-210')
 
 })
 
@@ -284,7 +284,7 @@ it('everyone is allin', () => {
   expect(r.fen).toBe(`10-20 1 | s0 AhAc / s0 2h2c / s0 3h3c $ 0-side 510-123 420-13 20-1 !p4h5h6h7h8h`)
 
 
-  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['p 1 400', 'p 2 170', 'p 3 380', 'v 2 170', 'v 3 210', 'v 1 20', 'a 2', 'a 3', 'a 1', 'f 4h5h6h', 'h 2 2h2c', 'h 3 3h3c', 't 7h', 'r 8h', 'c 2 s', 'c 3 s', 'c 1 s'])
+  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['p 1 400', 'p 2 170', 'p 3 380', 'v 2 170', 'v 3 210', 'v 1 20', 'a 1', 'a 2', 'a 3', 'f 4h5h6h', 'h 2 2h2c', 'h 3 3h3c', 't 7h', 'r 8h', 'c 1 s', 'c 2 s', 'c 3 s'])
 
   expect(r.dests.fen).toBe(`showdown`)
 
