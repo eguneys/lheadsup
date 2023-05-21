@@ -564,7 +564,11 @@ export class RoundN {
       return res
     } else {
       if (this.find_stack_sides_with_states('w').length > 0) {
-        return Dests.win
+        if (this.shares) {
+          return Dests.share
+        } else {
+          return Dests.win
+        }
       } else if (this.find_stack_sides_with_states('x').length > 0) {
         return Dests.fin
       } else if (this.find_stack_sides_with_states('d').length > 0) {
@@ -769,6 +773,12 @@ export class RoundN {
           }
         })
 
+      } break
+      case 'win': {
+
+        let { sides, chips } = this.pot
+        let pot_winner = sides[0]
+        events.all(this.pot_share(PotShare.win(pot_winner, chips)))
       } break
       case 'call': {
 

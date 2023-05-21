@@ -1,7 +1,7 @@
 import { it, expect } from 'vitest'
 import { RoundN } from '../src'
 
-it('bb has bet more than previous hasnt acted raise-- bug', () => {
+it('bb has bet more than previous hasnt acted raise-- bug cannot happen', () => {
 
   let r = RoundN.from_fen(`10-20 1 | d10 / d10 / d280 $!`)
 
@@ -44,6 +44,15 @@ it('everyone folds', () => {
 
   expect(r.dests.fen).toBe('win')
 
+  r.act('win')
+  expect(r.fen).toBe(`10-20 1 | f60 AhAc / f190 2h2c / w280 3h3c $ 30-3 !p4h5h6h7h8h shares win-3-30`)
+
+  expect(r.dests.fen).toBe('share')
+
+  r.act('share')
+
+  expect(r.fen).toBe(`10-20 1 | x60 / x190 / x310 $!`)
+  expect(r.dests.fen).toBe('fin')
 })
 
 
