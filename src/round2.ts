@@ -402,7 +402,7 @@ export class RoundN {
   }
 
   get have_played_sides() {
-    return this.find_stack_sides_with_states(['p', 'a', 'f', 'd', 'i', '@', 's'])
+    return this.find_stack_sides_with_states(['p', 'a', 'f', 'd', 'i', '@', 's', 'w'])
   }
 
 

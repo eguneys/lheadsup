@@ -56,7 +56,20 @@ it('everyone folds', () => {
 })
 
 
-it.skip('button folds', () => {
+it('button folds', () => {
+
+  let r = RoundN.from_fen(`10-20 1 | i60 AhAc call-0-20 / @190 2h2c sb-0-0-10 / i280 3h3c bb-0-0-20 $!p4h5h6h7h8h`)
+  expect(r.dests.fen).toBe('call-10 raise-10-20 fold')
+  r.act('call 10')
+
+  expect(r.dests.fen).toBe('check raise-0-20 fold')
+  r.act('fold')
+
+  expect(r.fen).toBe(`10-20 1 | p60 AhAc call-0-20 / p180 2h2c call-10-10 / f280 3h3c fold-20 $!p4h5h6h7h8h`)
+  expect(r.dests.fen).toBe('phase')
+
+  r.act('phase')
+  expect(r.fen).toBe(`10-20 1 | @60 AhAc / i180 2h2c / f280 3h3c $ 60-12 !f4h5h6h7h8h`)
 })
 
 it('bb folds', () => {
