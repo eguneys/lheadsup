@@ -1,6 +1,84 @@
 import { it, expect } from 'vitest'
 import { RoundN } from '../src'
 
+it('bench raise tests', () => {
+  let fen0 = `10-20 1 | @80 Qh9s / i80 2c6d / i230 9h8c raise-0-0-30 $ 60-123 !f9dTc4c3h6c`
+  let fen = `10-20 1 | @50 Qh9s call-0-30 / i80 2c6d / i230 9h8c raise-0-0-30 $ 60-123 !f9dTc4c3h6c`
+  let act = `call 30`
+
+  let r = RoundN.from_fen(fen0)
+  expect(r.dests.fen).toBe(`call-30 raise-30-30 fold`)
+  r.act(`call 30`)
+  expect(r.fen).toBe(`10-20 1 | i50 Qh9s call-0-30 / @80 2c6d / i230 9h8c raise-0-0-30 $ 60-123 !f9dTc4c3h6c`)
+
+})
+it('bench tests', () => {
+
+	let r = RoundN.from_fen(`10-20 1 | d100 / d100 / d280 $!`)
+
+  r.act('deal AhAc2h2c3h3c4h5h6h7h8h')
+  r.act('fold')
+  r.act('call 10')
+  r.act('check')
+  r.act('phase')
+  expect(r.dests.fen).toBe('check raise-0-20 fold')
+  r.act('fold')
+  expect(r.fen).toBe(`10-20 1 | f100 AhAc / p80 2h2c / f260 3h3c fold-0 $ 40-23 !f4h5h6h7h8h`)
+
+
+})
+
+it('everyone is allin or fold in phase', () => {
+  let r = RoundN.from_fen('10-20 1 | a0 KsJc allin-0-0-10 / @10 7d2c / f260 Qh3h $ 200-12 !r9cTh4c9dJh')
+
+  expect(r.dests.fen).toBe('raise-10-20 fold')
+  r.act('fold')
+  expect(r.fen).toBe('10-20 1 | a0 KsJc allin-0-0-10 / f10 7d2c fold-0 / f260 Qh3h $ 200-12 !r9cTh4c9dJh')
+  expect(r.dests.fen).toBe('phase')
+  r.act('phase')
+
+  expect(r.fen).toBe('10-20 1 | w0 KsJc / f10 7d2c / f260 Qh3h $ 210-12 !r9cTh4c9dJh')
+  expect(r.dests.fen).toBe('win')
+
+  r.act('win')
+  expect(r.fen).toBe('10-20 1 | w0 KsJc / f10 7d2c / f260 Qh3h $ 210-12 !r9cTh4c9dJh shares win-1-210')
+
+})
+
+it('cant raise if others are allin', () => {
+  let r = RoundN.from_fen(`10-20 1 | f100 Kc8h fold-0 / a0 5sTs allin-20-40-40 / @220 Qc4h raise-20-0-40 $!p3dKsKh7dJh`)
+  expect(r.dests.fen).toBe(`call-40 fold`)
+})
+
+it('a player allin when previous last player has raised more', () => {
+
+  let r = RoundN.from_fen(`10-20 1 | d100 / d100 / d280 $!`)
+  r.act('deal AhAc2h2c3h3c4h5h6h7h8h')
+
+  let acts = [
+    'raise 20-20',
+    'raise 30-60',
+    'raise 80-160',
+    'raise 60-0'  
+  ]
+
+  acts.slice(0, -1).forEach(_ => r.act(_))
+
+  expect(r.fen).toBe(`10-20 1 | @60 AhAc raise-0-20-20 / a0 2h2c allin-10-30-60 / i20 3h3c raise-20-80-160 $!p4h5h6h7h8h`)
+
+  r.act('raise 60-0')
+
+  expect(r.fen).toBe(`10-20 1 | a0 AhAc allin-40-60-0 / a0 2h2c allin-10-30-60 / p20 3h3c raise-20-80-160 $!p4h5h6h7h8h`)
+
+  expect(r.dests.fen).toBe('phase')
+
+  r.act('phase')
+  expect(r.fen).toBe(`10-20 1 | s0 AhAc / s0 2h2c / s20 3h3c $ 160-3side 300-312 0-32 !p4h5h6h7h8h`)
+  expect(r.dests.fen).toBe('showdown')
+
+})
+
+
 it('bb has bet more than previous hasnt acted raise-- bug cannot happen', () => {
 
   let r = RoundN.from_fen(`10-20 1 | d10 / d10 / d280 $!`)
@@ -333,7 +411,7 @@ it('three way', () => {
   expect(r.pov(2).fen).toBe(`10-20 3 | d200 / d300 / d100 $!`)
   expect(r.pov(3).fen).toBe(`10-20 2 | d300 / d100 / d200 $!`)
 
-  expect(r.dests.fen).toBe('deal')
+  expect(r.dests.fen).toBe('deal-3')
 
   let events = r.act('deal AhAc2h2c3h3c4h5h6h7h8h')
   expect(r.fen).toBe(`10-20 1 | @100 AhAc / i190 2h2c sb-0-0-10 / i280 3h3c bb-0-0-20 $!p4h5h6h7h8h`)

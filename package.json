@@ -9,7 +9,8 @@
     "build": "rimraf dist && esbuild ./src/index.ts --platform=node --format=esm --bundle --outdir=dist && tsc --emitDeclarationOnly",
     "lint:watch": "tsc --noEmit --watch",
     "test": "vitest --run",
-    "test:watch": "vitest --watch"
+    "test:watch": "vitest --watch",
+    "bench": "vitest bench"
   },
   "keywords": [],
   "author": "",
