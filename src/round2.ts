@@ -245,6 +245,7 @@ export class Dests {
   static get fold() { return new Dests(undefined, undefined, undefined, undefined, undefined, true) }
   static call(call: Call) { return new Dests(undefined, undefined, undefined, undefined, undefined, undefined, call) }
   static raise(raise: Raise) { return new Dests(undefined, undefined, undefined, undefined, undefined, undefined, undefined, raise) }
+  static get fin() { return new Dests(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, true) }
 
   constructor(
     public deal?: true,
@@ -254,9 +255,13 @@ export class Dests {
     public check?: true,
     public fold?: true,
     public call?: Call,
-    public raise?: Raise) {}
+    public raise?: Raise,
+    public fin?: true) {}
 
   get fen() {
+    if (this.fin) {
+      return 'fin'
+    }
     if (this.deal) {
       return 'deal'
     }
@@ -548,7 +553,9 @@ export class RoundN {
 
       return res
     } else {
-      if (this.find_stack_sides_with_states('d').length > 0) {
+      if (this.find_stack_sides_with_states('f').length > 0) {
+        return Dests.fin
+      } else if (this.find_stack_sides_with_states('d').length > 0) {
         return Dests.deal
       } if (this.find_stack_sides_with_states('s').length > 0) {
         if (this.shares) {
@@ -785,7 +792,7 @@ export class RoundN {
           if (this.stacks[side - 1].stack === 0) {
             events.all(this.change_state(side, 'e'))
           } else {
-            events.all(this.change_state(side, 'd'))
+            events.all(this.change_state(side, 'f'))
           }
           events.all(this.collect_card(side))
         })
@@ -815,7 +822,7 @@ export class RoundN {
 }
 
   private button_next() {
-    let deals = this.find_stack_sides_with_states('d')
+    let deals = this.find_stack_sides_with_states('f')
     this.button = next_side(deals, this.button)
 
     return new ButtonEvent(this.button)

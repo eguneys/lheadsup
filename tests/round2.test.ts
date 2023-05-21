@@ -36,7 +36,9 @@ it('everyone is allin', () => {
   expect(r.dests.fen).toBe('share')
 
   events = r.act('share')
-  expect(r.fen).toBe(`10-20 1 | d950 / e0 / e0 $!`)
+  expect(r.fen).toBe(`10-20 1 | f950 / e0 / e0 $!`)
+
+  expect(r.dests.fen).toBe('fin')
 })
 
 it('normal allin', () => {
@@ -245,15 +247,11 @@ it('three way', () => {
   expect(r.dests.fen).toBe('share')
 
   events = r.act('share')
-  expect(r.fen).toBe(`10-20 2 | d140 / d180 / d280 $!`)
+  expect(r.fen).toBe(`10-20 2 | f140 / f180 / f280 $!`)
 
-  expect(r.pov(1).fen).toBe(`10-20 2 | d140 / d180 / d280 $!`)
+  expect(r.pov(1).fen).toBe(`10-20 2 | f140 / f180 / f280 $!`)
 
-  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['C', 'S 1 60', 'c 1 d', 'o 1', 'c 2 d', 'o 2', 'c 3 d', 'o 3', 'b 2'])
+  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['C', 'S 1 60', 'c 1 f', 'o 1', 'c 2 f', 'o 2', 'c 3 f', 'o 3', 'b 2'])
 
-  expect(r.dests.fen).toBe('deal')
-
-  r.act('deal AhAc2h2c3h3c4h5h6h7h8h')
-
-  expect(r.fen).toBe(`10-20 2 | i120 AhAc bb-0-0-20 / @180 2h2c / i270 3h3c sb-0-0-10 $!p4h5h6h7h8h`)
+  expect(r.dests.fen).toBe('fin')
 })
