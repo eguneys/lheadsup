@@ -59,12 +59,23 @@ function choose_a_dest(r: RoundN) {
   return res[0]
 }
 
+let w = 0
+let n = 0
 function play(fen: string) {
 
   let r = RoundN.from_fen(fen)
 
   for (let i = 0; i < 60; i++) {
     let dest = choose_a_dest(r)
+    if (dest === 'showdown') {
+      n++
+    }
+    if (dest === 'win') {
+      w++
+    }
+    if (dest === 'fold') {
+      dest = choose_a_dest(r)
+    }
     if (dest === 'fin') {
       return
     } else {
@@ -86,7 +97,7 @@ function examine_play(fen: string) {
     dests.push(dest)
     fens.push(r.fen)
     if (dest === 'fin') {
-      //console.log(i, r.fen)
+      //console.log(i, r.fen, dests)
       return
     } else {
       let pre_fen = r.fen
@@ -142,7 +153,7 @@ describe('uneven stacks', () => {
 
 
   bench('three way uneven', () => {
-    examine_play(`10-20 1 | d100 / d200 / d300 $!`)
+    play(`10-20 1 | d100 / d200 / d300 $!`)
   })
 
 

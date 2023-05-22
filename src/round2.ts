@@ -909,10 +909,12 @@ export class RoundN {
       let everyone_has_bet = in_other_than_actions.every(_ => _.bet)
       let bets_matched = all_equal(in_other_than_actions.map(_ => _.bet?.total))
 
+      // TODO case if last player has to make a call
       if (in_other_than_actions.length === 1) {
         in_other_than_action_sides.forEach(side => events.all(this.change_state(side, 'p')))
       } else if (everyone_has_bet && bets_matched) {
         let max_allin_bet = Math.max(...allins.map(_ => _.bet?.total ?? 0))
+        // no point in max because all in bets are equal
         let max_ins_bet = Math.max(...in_other_than_actions.map(_ => _.bet!.total))
         if (in_other_than_actions.length === 0) {
         } else if (max_ins_bet >= max_allin_bet) {
