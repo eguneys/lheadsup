@@ -17,11 +17,11 @@ function next_phase(phase: Phase) {
   return next_phases[phase]
 }
 
-function next_side(in_other_than_action_sides: Side[], action_side: Side) {
+export function next_side(in_other_than_action_sides: Side[], action_side: Side) {
   return in_other_than_action_sides.find(_ => _ > action_side) ?? Math.min(...in_other_than_action_sides)
 }
 
-function find_sides<A>(_: A[], fn: (_: A) => boolean) {
+export function find_sides<A>(_: A[], fn: (_: A) => boolean) {
   let res = []
   _.forEach((_, i) => { if (fn(_)) { res.push(i + 1) }})
   return res
@@ -74,7 +74,7 @@ export class RoundNPov {
   }
 }
 
-function num(s: string) {
+export function num(s: string) {
   return parseInt(s)
 }
 
@@ -87,7 +87,7 @@ function num(s: string) {
 // 2 1 4
 // 3 1 3
 // 4 1 2
-function pov_side(nb: number, pov: Side, side: Side) {
+export function pov_side(nb: number, pov: Side, side: Side) {
   let res = (side - pov + 1)
   if (res < 1) {
     return res + nb
@@ -507,7 +507,6 @@ export class RoundN {
     let pov_stacks = stacks.slice(side - 1)
 
     if (side !== 1) {
-
       pov_stacks = [...pov_stacks, ...stacks.slice(0, side - 1)]
     }
 
@@ -1194,8 +1193,11 @@ export class ChangeState extends Event {
 export class Events {
 
   events: Map<Side, Event[]>
+  specs: Event[]
 
   constructor(readonly nb: number) {
+
+    this.specs = []
 
     this.events = new Map()
     for (let i = 1; i <= nb; i++) { this.events.set(i, []) }
@@ -1213,6 +1215,7 @@ export class Events {
         if (i === pov) continue
         this.events.get(i).push(event.pov(this.nb, i))
       }
+      this.specs.push(event)
     }
 
   }
@@ -1228,14 +1231,20 @@ export class Events {
       for (let i = 1; i <= this.nb; i++) {
         this.events.get(i).push(event.pov(this.nb, i))
       }
+      this.specs.push(event)
     }
   }
 
   only(s: Side, event: Event) {
     this.events.get(s).push(event.pov(this.nb, s))
+    this.specs.push(event)
   }
 
   pov(s: Side) {
     return this.events.get(s)
+  }
+
+  get spec() {
+    return this.specs
   }
 }
