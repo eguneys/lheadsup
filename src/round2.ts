@@ -1,29 +1,34 @@
-function split_cards(nb: number, n: string) {
+import { Card } from './hand_eval'
+
+export type Chips = number
+export type BetDescription = string
+
+function split_cards(nb: number, n: string): Card[] {
   return [...Array(nb).keys()].map(_ => n.slice(_ * 2, _ * 2 + 2))
 }
 
-const all_equal = arr => arr.every( v => v === arr[0] )
+const all_equal = <A>(arr: A[]) => arr.every( v => v === arr[0] )
 
 function sum(a: number[]) {
   return a.reduce((a, b) => a + b, 0)
 }
 
-let next_phases = {
+let next_phases: Record<Phase, Phase> = {
   'p': 'f',
   'f': 't',
   't': 'r'
 }
-function next_phase(phase: Phase) {
+function next_phase(phase: Phase): Phase {
   return next_phases[phase]
 }
 
-export function next_side(in_other_than_action_sides: Side[], action_side: Side) {
-  return in_other_than_action_sides.find(_ => _ > action_side) ?? Math.min(...in_other_than_action_sides)
+export function next_side(in_other_than_action_sides: Side[], action_side: Side): Side {
+  return in_other_than_action_sides.find(_ => _ > action_side) ?? Math.min(...in_other_than_action_sides) as Side
 }
 
 export function find_sides<A>(_: A[], fn: (_: A) => boolean) {
-  let res = []
-  _.forEach((_, i) => { if (fn(_)) { res.push(i + 1) }})
+  let res: Side[] = []
+  _.forEach((_, i) => { if (fn(_)) { res.push(i + 1 as Side) }})
   return res
 }
 
@@ -87,16 +92,16 @@ export function num(s: string) {
 // 2 1 4
 // 3 1 3
 // 4 1 2
-export function pov_side(nb: number, pov: Side, side: Side) {
+export function pov_side(nb: number, pov: Side, side: Side): Side {
   let res = (side - pov + 1)
   if (res < 1) {
-    return res + nb
+    return res + nb as Side
   } else {
-    return res
+    return res as Side
   }
 }
 
-function next(nb: number, s: Side) {
+export function next(nb: number, s: Side) {
   if (s + 1 > nb) {
     return 1
   } else {
@@ -114,8 +119,10 @@ export class PotShare {
   pov(nb: number, pov: Side) {
     let { win, back } = this
 
-    let pov_win = win ? [pov_side(nb, pov, win[0]), win[1]] : undefined
-    let pov_back = back ? [pov_side(nb, pov, back[0]), back[1]] : undefined
+    let pov_win: [Side, Chips] | undefined = 
+      win ? [pov_side(nb, pov, win[0]), win[1]] : undefined
+    let pov_back: [Side, Chips] | undefined = 
+      back ? [pov_side(nb, pov, back[0]), back[1]] : undefined
     return new PotShare(pov_win, pov_back)
   }
 
@@ -178,18 +185,22 @@ export class Bet {
 
 export class Stack {
 
+  static make = (chips: number) => new Stack('d', chips)
+
   static from_fen = (fen: string) => {
     let state = fen.trim()[0]
-    let [stack, hand, bet] = fen.trim().slice(1).split(' ')
+    let [stack, hand_s, bet_s] = fen.trim().slice(1).split(' ')
 
-    if (!hand) {
-    } else if (hand.length === 4 && hand !== 'fold') {
+    let bet: string | undefined = bet_s,
+      hand: string | undefined = hand_s
+    if (!hand_s) {
+    } else if (hand_s.length === 4 && hand_s !== 'fold') {
     } else {
-      bet = hand
+      bet = hand_s
       hand = undefined
     }
 
-    return new Stack(state, num(stack), hand ? split_cards(2, hand) : undefined, bet ? Bet.from_fen(bet) : undefined)
+    return new Stack(state, num(stack), hand ? (split_cards(2, hand) as [Card, Card]) : undefined, bet ? Bet.from_fen(bet) : undefined)
   }
 
   constructor(
@@ -312,9 +323,9 @@ export class Pot {
     let [main, side_pots_s] = fen.trim().split('side')
     let [chips, sides] = main.split('-')
 
-    let side_pots = side_pots_s?.trim().split(' ').map(_ => Pot.from_fen(_))
+    let side_pots: Pot[] = side_pots_s?.trim().split(' ').map(_ => Pot.from_fen(_))
 
-    return new Pot(num(chips), sides.split('').map(_ => num(_)), side_pots)
+    return new Pot(num(chips), sides.split('').map(_ => num(_)) as Side[], side_pots)
   }
 
   static empty = () => new Pot(0, [])
@@ -323,6 +334,11 @@ export class Pot {
     public chips: Chips,
     public sides: Side[],
     public side_pots?: Pot[]) {}
+
+  get total_pot() {
+    return this.chips + sum(this.side_pots?.map(_ => _.chips) ?? [])
+  }
+
 
   exclude_fold(side: Side) {
     this.sides = this.sides.filter(_ => _ !== side)
@@ -368,7 +384,7 @@ export class Pot {
 
   get fen() {
 
-    let side_pots = this.side_pots ? 
+    let side_pots: string = this.side_pots ? 
       `side ${this.side_pots.map(_ => _.fen).join(' ')}` : ''
 
     return `${this.chips}-${this.sides.join('')}${side_pots}`
@@ -379,6 +395,10 @@ export type Phase = string
 
 export class RoundN {
 
+  static make = (small_blind: number, button: Side, stacks: Chips[]) => {
+    return new RoundN(small_blind, button, stacks.map(_ => Stack.make(_)))
+  }
+
   static from_fen = (fen: string) => {
     let [rest, f_cards] = fen.split('!')
     let [rest2, pot] = rest.split('$')
@@ -387,10 +407,10 @@ export class RoundN {
     let [blinds, button] = head.split(' ')
     let [small_blind] = blinds.split('-')
 
-    let middle = f_cards === '' ? [] : split_cards(5, f_cards.slice(1))
+    let middle = f_cards === '' ? undefined : (split_cards(5, f_cards.slice(1)) as [Card, Card, Card, Card, Card])
     let phase = f_cards === '' ? undefined : f_cards[0]
 
-    return new RoundN(num(small_blind), num(button), stacks.split('/').map(Stack.from_fen), pot === '' ? undefined : Pot.from_fen(pot), middle, phase)
+    return new RoundN(num(small_blind), num(button) as Side, stacks.split('/').map(Stack.from_fen), pot === '' ? undefined : Pot.from_fen(pot), middle, phase)
   }
 
   constructor(
@@ -493,11 +513,11 @@ export class RoundN {
 
 
   get have_contributed_to_pots() {
-    return this.stacks.filter(_ => _.bet)
+    return this.stacks.filter(_ => !!_.bet)
   }
 
   get have_contributed_to_pot_sides() {
-    return find_sides(this.stacks, _ => _.bet)
+    return find_sides(this.stacks, _ => !!_.bet)
   }
 
   pov(side: Side) {
@@ -514,7 +534,7 @@ export class RoundN {
       reveal_turn = phase === 't' || phase === 'r',
       reveal_river = phase === 'r'
 
-    let flop = reveal_flop ? this.middle?.slice(0, 3) : undefined
+    let flop = reveal_flop ? (this.middle?.slice(0, 3) as [Card, Card, Card] | undefined) : undefined
     let turn = reveal_turn ? this.middle?.[3] : undefined
     let river = reveal_river ? this.middle?.[4] : undefined
 
@@ -667,13 +687,13 @@ export class RoundN {
         events.all(sb_events)
         events.all(bb_events)
 
-        this.middle = split_cards(5, args.slice(nb * 4, nb * 4 + 10))
+        this.middle = split_cards(5, args.slice(nb * 4, nb * 4 + 10)) as [Card, Card, Card, Card, Card]
 
         deal_sides.forEach((side, i) => {
           let _ = this.stacks[side - 1]
-          _.hand = split_cards(2, args.slice(i * 4))
+          _.hand = split_cards(2, args.slice(i * 4)) as [Card, Card]
 
-          events.only(side, new HandEvent(side, _.hand))
+          events.only(side, new HandEvent(side, _.hand!))
         })
 
 
@@ -698,14 +718,14 @@ export class RoundN {
           let _ = this.stacks[side - 1]
 
           if (_.bet) {
-            events.all(this.pot.add_bet(side, _.bet))
+            events.all(this.pot!.add_bet(side, _.bet))
           }
         })
 
         fold_sides.forEach(side => {
           let _ = this.stacks[side - 1]
           if (_.bet) {
-            events.all(this.pot.add_bet(side, _.bet, true))
+            events.all(this.pot!.add_bet(side, _.bet, true))
           }
         })
 
@@ -713,12 +733,12 @@ export class RoundN {
 
           let decrease = 0
           allin_this_hand_sides.sort((a, b) => {
-            let abet = this.stacks[a - 1].bet.total
-            let bbet = this.stacks[b - 1].bet.total
+            let abet = this.stacks[a - 1].bet!.total
+            let bbet = this.stacks[b - 1].bet!.total
             return abet - bbet
           }).forEach(side => {
-            let chips = this.stacks[side - 1].bet.total - decrease
-            events.all(this.pot.side_pot([side], chips))
+            let chips = this.stacks[side - 1].bet!.total - decrease
+            events.all(this.pot!.side_pot([side], chips))
             decrease += chips
           })
         }
@@ -729,11 +749,11 @@ export class RoundN {
 
         if (!everyone_has_folded && !everyone_has_folded_to_allin) {
           if (phase === 'p') {
-            events.all(new FlopEvent(this.middle.slice(0, 3)))
+            events.all(new FlopEvent(this.middle!.slice(0, 3) as [Card, Card, Card]))
           } else if (phase === 'f') {
-            events.all(new TurnEvent(this.middle[3]))
+            events.all(new TurnEvent(this.middle![3]))
           } else if (phase === 't') {
-            events.all(new RiverEvent(this.middle[4]))
+            events.all(new RiverEvent(this.middle![4]))
           } 
         }
         
@@ -749,14 +769,14 @@ export class RoundN {
             })
           } else {
             allins.forEach(side => {
-              events.others(side, new HandEvent(side, this.stacks[side - 1].hand))
+              events.others(side, new HandEvent(side, this.stacks[side - 1].hand!))
             })
 
             if (phase === 'p') {
-              events.all(new TurnEvent(this.middle[3]))
-              events.all(new RiverEvent(this.middle[4]))
+              events.all(new TurnEvent(this.middle![3]))
+              events.all(new RiverEvent(this.middle![4]))
             } else if (phase === 'f') {
-              events.all(new RiverEvent(this.middle[4]))
+              events.all(new RiverEvent(this.middle![4]))
             } 
 
             [...phase_sides, ...allin_sides].forEach(side => {
@@ -771,7 +791,7 @@ export class RoundN {
 
           let showdowns = this.find_stack_sides_with_states('s')
           showdowns.forEach(side => {
-            events.others(side, new HandEvent(side, this.stacks[side - 1].hand))
+            events.others(side, new HandEvent(side, this.stacks[side - 1].hand!))
           })
         } else {
 
@@ -786,13 +806,13 @@ export class RoundN {
             }
           })
 
-          this.phase = next_phase(this.phase)
+          this.phase = next_phase(this.phase!)!
         }
       } break
       case 'showdown': {
 
 
-        [this.pot, ...this.pot?.side_pots ?? []].forEach(pot => {
+        [this.pot!, ...this.pot!.side_pots ?? []].forEach(pot => {
           let { sides, chips } = pot
           if (sides.length === 0) {
           } else if (sides.length === 1) {
@@ -807,7 +827,7 @@ export class RoundN {
       } break
       case 'win': {
 
-        let { sides, chips } = this.pot
+        let { sides, chips } = this.pot!
         let pot_winner = sides[0]
         events.all(this.pot_share(PotShare.win(pot_winner, chips)))
       } break
@@ -855,7 +875,7 @@ export class RoundN {
           let only_in_side = in_other_than_action_sides[0]
         // only player left has moved more than this players allin
         if (in_other_than_action_sides.length === 1 &&
-            this.stacks[only_in_side - 1].bet?.total > action_stack) {
+            (this.stacks[only_in_side - 1].bet?.total ?? 0) > action_stack) {
           events.all(this.change_state(in_action_next, 'p'))
         } else if (in_other_than_action_sides.length > 0) {
           events.all(this.change_state(in_action_next, '@'))
@@ -868,8 +888,8 @@ export class RoundN {
 
         events.all(this.collect_pot())
 
-        shares.forEach(share => {
-          events.all(this.pot_share_stack_add(share))
+        shares!.forEach(share => {
+          events.all(this.pot_share_stack_add(share)!)
         })
 
         have_played_sides.forEach(side => {
@@ -955,7 +975,7 @@ export class RoundN {
   }
 
   private collect_pot() {
-    this.pot = []
+    this.pot = undefined
     this.shares = undefined
     this.middle = undefined
     return new CollectPot()
@@ -985,7 +1005,9 @@ export class RoundN {
 
 }
 
-export abstract class Event {}
+export abstract class Event {
+  abstract pov(nb: number, pov: Side): Event
+}
 
 
 export class SidePotEvent extends Event {
@@ -1200,7 +1222,10 @@ export class Events {
     this.specs = []
 
     this.events = new Map()
-    for (let i = 1; i <= nb; i++) { this.events.set(i, []) }
+    for (let i = 1; i <= nb; i++) { 
+      let side = i as Side
+      this.events.set(side, []) 
+    }
   }
 
   others(pov: Side, events: Event | Event[]) {
@@ -1212,8 +1237,9 @@ export class Events {
 
     for (let event of events) {
       for (let i = 1; i <= this.nb; i++) {
-        if (i === pov) continue
-        this.events.get(i).push(event.pov(this.nb, i))
+        let side = i as Side
+        if (side === pov) continue
+        this.events.get(side)!.push(event.pov(this.nb, side))
       }
       this.specs.push(event)
     }
@@ -1229,14 +1255,15 @@ export class Events {
 
     for (let event of events) {
       for (let i = 1; i <= this.nb; i++) {
-        this.events.get(i).push(event.pov(this.nb, i))
+        let side: Side = i as Side
+        this.events.get(side)!.push(event.pov(this.nb, side))
       }
       this.specs.push(event)
     }
   }
 
   only(s: Side, event: Event) {
-    this.events.get(s).push(event.pov(this.nb, s))
+    this.events.get(s)!.push(event.pov(this.nb, s))
     this.specs.push(event)
   }
 

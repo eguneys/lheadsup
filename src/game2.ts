@@ -1,16 +1,16 @@
-import { next_side, pov_side, ButtonEvent, StackAddEvent, ChangeState, Events, num, find_sides } from './round2'
+import { Chips, Side, StackState, next_side, pov_side, ButtonEvent, StackAddEvent, ChangeState, Events, num, find_sides } from './round2'
 
 export class GDests {
 
   constructor(
-    readonly sit?: Side[],
-    readonly lea?: Side[],
-    readonly deal?: true,
-    readonly folds?: Side[],
-    readonly nexts?: Side[],
-    readonly share?: true,
-    readonly js?: Side[]
-  )
+    public sit?: Side[],
+    public lea?: Side[],
+    public deal?: true,
+    public folds?: Side[],
+    public nexts?: Side[],
+    public share?: true,
+    public js?: Side[]
+  ) {}
 
   get fen() {
     let res = []
@@ -45,6 +45,8 @@ export class GDests {
     return res.join(' ')
   }
 }
+
+export type SeatState = string
 
 export class Seat {
 
@@ -88,12 +90,12 @@ export class GameN {
     let [small_blind] = blinds.split('-')
 
 
-    return new GameN(num(small_blind), num(button), seats.split(' / ').map(Seat.from_fen))
+    return new GameN(num(small_blind), num(button) as Side, seats.split(' / ').map(Seat.from_fen))
   }
 
   constructor(
     readonly small_blind: Chips,
-    readonly button: Side,
+    public button: Side,
     readonly seats: Seat[]
   ) {}
 
@@ -206,7 +208,9 @@ export class GameN {
 
     switch (cmd) {
       case 'sit': {
-        let [side, chips] = args.split('-')
+        let [side_s, chips_s] = args.split('-')
+        let side = num(side_s) as Side
+        let chips = num(chips_s) as Chips
 
         this.seats[side - 1].chips = chips
         events.all(new StackAddEvent(side, chips))
@@ -222,7 +226,7 @@ export class GameN {
         }
       } break
       case 'lea': {
-        let side = num(args)
+        let side = num(args) as Side
 
         events.all(this.leave(side))
 
@@ -281,7 +285,9 @@ export class GameN {
         }
       } break
       case 'next': {
-        let [side, chips] = args.split('-')
+        let [side_s, chips_s] = args.split('-')
+        let side = num(side_s) as Side
+        let chips = num(chips_s) as Chips
 
         this.seats[side - 1].chips = chips
         events.all(new StackAddEvent(side, chips))
@@ -289,12 +295,12 @@ export class GameN {
         events.all(this.change_state(side, 'n'))
       } break
       case 'fold': {
-        let side = args
+        let side = num(args) as Side
 
         events.all(this.change_state(side, 'j'))
       } break
       case 'in': {
-        let side = args
+        let side = num(args) as Side
 
         events.all(this.change_state(side, 'i'))
       }
