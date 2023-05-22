@@ -48,6 +48,10 @@ export class GDests {
 
 export class Seat {
 
+  static get empty() { 
+    return new Seat('e', 0)
+  }
+
   static from_fen = (fen: string) => {
     let state = fen.trim()[0]
     let chips = fen.trim().slice(1)
@@ -64,7 +68,17 @@ export class Seat {
   }
 }
 
+function make_game(small_blind: number, nb: number) {
+  let seats = [...Array(nb)].map(_ => Seat.empty)
+  return new GameN(small_blind, 1, seats)
+}
+
 export class GameN {
+
+  static nine = (small_blind: number) => make_game(small_blind, 9)
+  static six = (small_blind: number) => make_game(small_blind, 6)
+  static three = (small_blind: number) => make_game(small_blind, 3)
+  static headsup = (small_blind: number) => make_game(small_blind, 2)
 
   //`10-20 1 | e0 / e0 / e0`
   static from_fen = (fen: string) => {
