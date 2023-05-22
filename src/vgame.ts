@@ -9,6 +9,13 @@ export class ValidGameN {
     readonly game: GameN,
     readonly round?: RoundN) {}
 
+  get game_dests() {
+    return this.game.dests
+  }
+
+  get round_dests() {
+    return this.round?.dests
+  }
 
   dealer_round() {
     let { dests } = this.round
@@ -26,8 +33,12 @@ export class ValidGameN {
     }
   }
 
-  action_round(act: string) {
-    let { dests } = this.round
+  action_round(side: Side, act: string) {
+    let { dests, action_side } = this.round
+
+    if (side !== action_side) {
+      return undefined
+    }
 
     if (dests.check && act === 'check') {
       return this.round.act('check')
@@ -85,6 +96,34 @@ export class ValidGameN {
   action_game(act: string) {
     let { dests } = this.game
 
+    let [cmd, args] = act.split(' ')
+    if (dests.sit && cmd === 'sit') {
+      let [side, prechecked_chips] = args.split('-')
 
+      if (dests.sit.includes(side)) {
+        return this.game.act(cmd)
+      }
+    }
+    if (dests.lea && cmd === 'lea') {
+
+      if (dests.lea.includes(args)) {
+        return this.game.act(cmd)
+      }
+    }
+    if (dests.folds && cmd === 'fold') {
+      if (dests.folds.includes(args)) {
+        return this.game.act(cmd)
+      }
+    }
+    if (dests.nexts && cmd === 'next') {
+      if (dests.nexts.includes(args)) {
+        return this.game.act(cmd)
+      }
+    }
+    if (dests.js && cmd === 'in') {
+      if (dests.js.includes(args)) {
+        return this.game.act(cmd)
+      }
+    }
   }
 }
