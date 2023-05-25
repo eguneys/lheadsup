@@ -112,27 +112,34 @@ export function next(nb: number, s: Side) {
 export class PotShare {
   static win(n: Side, chips: Chips) { return new PotShare([n, chips]) }
   static back(n: Side, chips: Chips) { return new PotShare(undefined, [n, chips]) }
+  static swin(n: Side, chips: Chips) { return new PotShare(undefined, undefined, [n, chips]) }
 
-  constructor(readonly win?: [Side, Chips], readonly back?: [Side, Chips]) {}
+  constructor(readonly win?: [Side, Chips], readonly back?: [Side, Chips], readonly swin?: [Side, Chips]) {}
 
 
   pov(nb: number, pov: Side) {
-    let { win, back } = this
+    let { win, back, swin } = this
 
     let pov_win: [Side, Chips] | undefined = 
       win ? [pov_side(nb, pov, win[0]), win[1]] : undefined
     let pov_back: [Side, Chips] | undefined = 
       back ? [pov_side(nb, pov, back[0]), back[1]] : undefined
-    return new PotShare(pov_win, pov_back)
+
+    let pov_swin: [Side, Chips] | undefined = 
+      swin ? [pov_side(nb, pov, swin[0]), swin[1]] : undefined
+    return new PotShare(pov_win, pov_back, pov_swin)
   }
 
   get fen() {
-    let { win, back } = this
+    let { win, back, swin } = this
     if (win) {
       return `win-${win[0]}-${win[1]}`
     }
     if (back) {
       return `back-${back[0]}-${back[1]}`
+    }
+    if (swin) {
+      return `swin-${swin[0]}-${swin[1]}`
     }
   }
 }
@@ -856,10 +863,10 @@ export class RoundN {
             if (winners.length > 1) {
               // TODO tie
               let pot_winner = winners[0]
-              pot_shares.push(PotShare.win(pot_winner, chips))
+              pot_shares.push(PotShare.swin(pot_winner, chips))
             } else {
               let pot_winner = winners[0]
-              pot_shares.push(PotShare.win(pot_winner, chips))
+              pot_shares.push(PotShare.swin(pot_winner, chips))
             }
           }
 
@@ -997,7 +1004,17 @@ export class RoundN {
 
   private pot_share_stack_add(share: PotShare) {
 
-    let { win, back } = share
+    let { swin, win, back } = share
+
+
+    if (swin) {
+      let [side, chips] = swin
+
+      this.stacks[side - 1].stack += chips
+      
+      return new StackAddEvent(side, chips)
+    }
+
 
     if (win) {
       let [side, chips] = win

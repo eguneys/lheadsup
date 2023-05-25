@@ -120,7 +120,7 @@ it('bb has bet more than previous hasnt acted raise-- bug cannot happen', () => 
   expect(r.dests.fen).toBe('showdown')
 
   r.act('showdown')
-  expect(r.fen).toBe(`10-20 1 | f10 AhAc / s0 2h2c / s260 3h3c $ 10-3side 20-32 !p4h5h6h7h8h shares back-3-10 win-3-20`)
+  expect(r.fen).toBe(`10-20 1 | f10 AhAc / s0 2h2c / s260 3h3c $ 10-3side 20-32 !p4h5h6h7h8h shares back-3-10 swin-3-20`)
 
   expect(r.dests.fen).toBe('share')
   r.act('share')
@@ -210,7 +210,7 @@ it('bb folds', () => {
   expect(r.dests.fen).toBe('showdown')
 
   r.act('showdown')
-  expect(r.fen).toBe(`10-20 1 | s60 AhAc / s160 2h2c / f280 3h3c $ 100-12 !r4h5h6h7h8h shares win-1-100`)
+  expect(r.fen).toBe(`10-20 1 | s60 AhAc / s160 2h2c / f280 3h3c $ 100-12 !r4h5h6h7h8h shares swin-1-100`)
 
   expect(r.dests.fen).toBe('share')
 
@@ -273,7 +273,7 @@ it('sb folds', () => {
   expect(r.dests.fen).toBe('showdown')
 
   r.act('showdown')
-  expect(r.fen).toBe(`10-20 1 | s60 AhAc / f190 2h2c / s260 3h3c $ 90-13 !r4h5h6h7h8h shares win-1-90`)
+  expect(r.fen).toBe(`10-20 1 | s60 AhAc / f190 2h2c / s260 3h3c $ 90-13 !r4h5h6h7h8h shares swin-1-90`)
 
   expect(r.dests.fen).toBe('share')
 
@@ -311,9 +311,9 @@ it('everyone is allin', () => {
   expect(r.dests.fen).toBe(`showdown`)
 
   events = r.act('showdown')
-  expect(r.fen).toBe(`10-20 1 | s0 AhAc / s0 2h2c / s0 3h3c $ 0-side 510-123 420-13 20-1 !p4h5h6h7h8h shares win-1-510 win-1-420 back-1-20`)
+  expect(r.fen).toBe(`10-20 1 | s0 AhAc / s0 2h2c / s0 3h3c $ 0-side 510-123 420-13 20-1 !p4h5h6h7h8h shares swin-1-510 swin-1-420 back-1-20`)
 
-  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['w win-1-510', 'w win-1-420', 'w back-1-20'])
+  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['w swin-1-510', 'w swin-1-420', 'w back-1-20'])
 
   expect(r.dests.fen).toBe('share')
 
@@ -527,12 +527,12 @@ it('three way', () => {
   expect(r.dests.fen).toBe('showdown')
 
   events = r.act('showdown')
-  expect(r.fen).toBe(`10-20 1 | s80 AhAc / s180 2h2c / s280 3h3c $ 60-123 !r4h5h6h7h8h shares win-1-60`)
+  expect(r.fen).toBe(`10-20 1 | s80 AhAc / s180 2h2c / s280 3h3c $ 60-123 !r4h5h6h7h8h shares swin-1-60`)
 
-  expect(r.pov(1).fen).toBe(`10-20 1 | s80 AhAc / s180 2h2c / s280 3h3c $ 60-123 !4h5h6h7h8h shares win-1-60`)
-  expect(r.pov(2).fen).toBe(`10-20 3 | s180 2h2c / s280 3h3c / s80 AhAc $ 60-123 !4h5h6h7h8h shares win-3-60`)
+  expect(r.pov(1).fen).toBe(`10-20 1 | s80 AhAc / s180 2h2c / s280 3h3c $ 60-123 !4h5h6h7h8h shares swin-1-60`)
+  expect(r.pov(2).fen).toBe(`10-20 3 | s180 2h2c / s280 3h3c / s80 AhAc $ 60-123 !4h5h6h7h8h shares swin-3-60`)
 
-  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['w win-1-60'])
+  expect(events.pov(1).map(_ => _.fen)).toStrictEqual(['w swin-1-60'])
 
   expect(r.dests.fen).toBe('share')
 
