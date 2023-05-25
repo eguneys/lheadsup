@@ -1,4 +1,4 @@
-import { Card } from './hand_eval'
+import { Card, hand_rank } from './hand_eval'
 
 export type Chips = number
 export type BetDescription = string
@@ -344,7 +344,6 @@ export class Pot {
     return this.chips + sum(this.side_pots?.map(_ => _.chips) ?? [])
   }
 
-
   exclude_fold(side: Side) {
     this.sides = this.sides.filter(_ => _ !== side)
   }
@@ -659,6 +658,8 @@ export class RoundN {
         let deals = this.find_stacks_with_states('d')
         let deal_sides = this.find_stack_sides_with_states('d')
         let side_action_preflop = next_side(deal_sides, big_blind_side)
+        let action_side = side_action_preflop
+
 
         let big_blind_stack = this.stacks[big_blind_side - 1].stack
         let big_blind_all_in = big_blind_stack <= big_blind
@@ -666,11 +667,22 @@ export class RoundN {
         let small_blind_stack = this.stacks[small_blind_side - 1].stack
         let small_blind_all_in = small_blind_stack <= small_blind
 
+        let bb_allin_less_than_sb = big_blind_all_in && small_blind > big_blind_stack
+
+        if (small_blind_all_in && action_side === small_blind_side) {
+          side_action_preflop = next_side(deal_sides, side_action_preflop)
+          action_side = side_action_preflop
+        }
+
         deal_sides.forEach((side, i) => {
           let _ = this.stacks[side - 1]
 
           if (small_blind_all_in && side === small_blind_side) {
             events.all(this.change_state(side, 'a'))
+          } else if (bb_allin_less_than_sb && side === small_blind_side)  {
+            events.all(this.change_state(side, 'p'))
+          } else if (small_blind_all_in && side === big_blind_side && side === action_side) {
+            events.all(this.change_state(side, 'p'))
           } else if (big_blind_all_in && side === big_blind_side) {
             events.all(this.change_state(side, 'a'))
           } else if (side === side_action_preflop) {
@@ -684,13 +696,19 @@ export class RoundN {
         if (big_blind_all_in) {
           bb_events = this.post_bet(big_blind_side, 'allin', 0, big_blind_stack)
         } else {
-          bb_events = this.post_bet(big_blind_side, 'bb', 0, big_blind)
+          if (small_blind_all_in && action_side === big_blind_side) {
+            bb_events = this.post_bet(big_blind_side, 'call', small_blind_stack)
+          } else {
+            bb_events = this.post_bet(big_blind_side, 'bb', 0, big_blind)
+          }
         }
 
         let sb_events
        
         if (small_blind_all_in) {
           sb_events = this.post_bet(small_blind_side, 'allin', 0, small_blind_stack)
+        } else if (bb_allin_less_than_sb) {
+          sb_events = this.post_bet(small_blind_side, 'call', big_blind_stack)
         } else {
           sb_events = this.post_bet(small_blind_side, 'sb', 0, small_blind)
         }
@@ -823,21 +841,35 @@ export class RoundN {
 
 
         [this.pot!, ...this.pot!.side_pots ?? []].forEach(pot => {
+
+          let pot_shares = []
           let { sides, chips } = pot
           if (sides.length === 0) {
           } else if (sides.length === 1) {
-            events.all(this.pot_share(PotShare.back(sides[0], chips)))
+            pot_shares.push(PotShare.back(sides[0], chips))
           } else {
-            let pot_winner = sides[0]
+            let ranks = sides.map(side => hand_rank([...this.middle!, ...this.stacks[side - 1].hand!]).hand_eval)
+            let max_rank = Math.max(...ranks)
 
-            events.all(this.pot_share(PotShare.win(pot_winner, chips)))
+            let winners = sides.filter((side, i) => ranks[i] === max_rank)
+
+            if (winners.length > 1) {
+              // TODO tie
+              let pot_winner = winners[0]
+              pot_shares.push(PotShare.win(pot_winner, chips))
+            } else {
+              let pot_winner = winners[0]
+              pot_shares.push(PotShare.win(pot_winner, chips))
+            }
           }
+
+          events.all(pot_shares.map(_ => this.pot_share(_)))
         })
 
       } break
       case 'win': {
-
         let { sides, chips } = this.pot!
+        // everyone has folded so excluded from sides
         let pot_winner = sides[0]
         events.all(this.pot_share(PotShare.win(pot_winner, chips)))
       } break

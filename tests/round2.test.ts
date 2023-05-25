@@ -1,6 +1,28 @@
 import { it, expect } from 'vitest'
 import { RoundN } from '../src'
 
+it('sb allin', () => {
+  let r = RoundN.from_fen(`160-320 1 | d5920 / d80 $!`)
+  expect(r.dests.fen).toBe('deal-2')
+
+  r.act('deal AhAc2h2c3h4h5h6h7h')
+  expect(r.fen).toBe(`160-320 1 | p5840 AhAc call-0-80 / a0 2h2c allin-0-0-80 $!p3h4h5h6h7h`)
+})
+
+it('headsup bb is allin for less than sb', () => {
+  let r = RoundN.from_fen(`410-820 2 | d5550 / d40 $!`)
+  expect(r.dests.fen).toBe('deal-2')
+
+  r.act('deal AhAc2h2c3h3c4h5h6h7h8h')
+  expect(r.fen).toBe(`410-820 2 | p5510 AhAc call-0-40 / a0 2h2c allin-0-0-40 $!p3h3c4h5h6h`)
+})
+
+it('headsup ai play tests', () => {
+  let r = RoundN.from_fen(`185-370 1 | p2555 Ac3h bb-0-0-370 / f2890 TdKc fold-185 $!pQc5d5h8dJc`)
+  expect(r.dests.fen).toBe('phase')
+  r.act('phase')
+})
+
 it('bench raise tests', () => {
   let fen0 = `10-20 1 | @80 Qh9s / i80 2c6d / i230 9h8c raise-0-0-30 $ 60-123 !f9dTc4c3h6c`
   let fen = `10-20 1 | @50 Qh9s call-0-30 / i80 2c6d / i230 9h8c raise-0-0-30 $ 60-123 !f9dTc4c3h6c`
@@ -31,7 +53,7 @@ it('bench tests', () => {
 it('everyone is allin or fold in phase', () => {
   let r = RoundN.from_fen('10-20 1 | a0 KsJc allin-0-0-10 / @10 7d2c / f260 Qh3h $ 200-12 !r9cTh4c9dJh')
 
-  expect(r.dests.fen).toBe('raise-10-20 fold')
+  expect(r.dests.fen).toBe('raise-10-20x10-0 fold')
   r.act('fold')
   expect(r.fen).toBe('10-20 1 | a0 KsJc allin-0-0-10 / f10 7d2c fold-0 / f260 Qh3h $ 200-12 !r9cTh4c9dJh')
   expect(r.dests.fen).toBe('phase')
@@ -87,7 +109,7 @@ it('bb has bet more than previous hasnt acted raise-- bug cannot happen', () => 
 
   expect(r.fen).toBe(`10-20 1 | @10 AhAc / a0 2h2c allin-0-0-10 / i260 3h3c bb-0-0-20 $!p4h5h6h7h8h`)
 
-  expect(r.dests.fen).toBe('raise-20-20 fold')
+  expect(r.dests.fen).toBe('raise-20-20x10-0 fold')
   r.act('fold')
 
   expect(r.fen).toBe(`10-20 1 | f10 AhAc fold-0 / a0 2h2c allin-0-0-10 / p260 3h3c bb-0-0-20 $!p4h5h6h7h8h`)
@@ -271,7 +293,7 @@ it('everyone is allin', () => {
   r.act(`raise 80-300`)
   r.act(`raise 160-0`)
   expect(r.fen).toBe(`10-20 1 | a0 AhAc allin-20-80-300 / a0 2h2c allin-10-160-0 / @280 3h3c raise-20-0-80 $!p4h5h6h7h8h`)
-  expect(r.dests.fen).toBe(`raise-300-300 fold`)
+  expect(r.dests.fen).toBe(`raise-300-300x280-0 fold`)
 
   r.act(`raise 280-0`)
   expect(r.fen).toBe(`10-20 1 | a0 AhAc allin-20-80-300 / a0 2h2c allin-10-160-0 / a0 3h3c allin-100-280-0 $!p4h5h6h7h8h`)
@@ -308,7 +330,7 @@ it('normal allin', () => {
 
   r.act(`raise 80-300`)
   expect(r.fen).toBe(`10-20 1 | a0 AhAc allin-20-80-300 / @160 2h2c call-0-10 / i280 3h3c raise-20-0-80 $!4h5h6h7h8h`)
-  expect(r.dests.fen).toBe(`raise-390-300 fold`)
+  expect(r.dests.fen).toBe(`raise-390-300x160-0 fold`)
 })
 
 
@@ -347,7 +369,7 @@ it('cant raise allin', () => {
   expect(r.fen).toBe(`10-20 1 | a0 AhAc allin-20-80-80 / @160 2h2c call-0-10 / i280 3h3c raise-20-0-80 $!4h5h6h7h8h`)
 })
 
-it.only('cant call allin', () => {
+it('cant call allin', () => {
   let r = RoundN.from_fen(`10-20 1 | @80 AhAc call-0-20 / i160 2h2c call-0-10 / i280 3h3c raise-20-0-80 $!p4h5h6h7h8h`)
   expect(r.dests.fen).toBe(`raise-80-80x80-0 fold`)
 
