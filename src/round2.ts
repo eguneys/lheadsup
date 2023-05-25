@@ -103,9 +103,9 @@ export function pov_side(nb: number, pov: Side, side: Side): Side {
 
 export function next(nb: number, s: Side) {
   if (s + 1 > nb) {
-    return 1
+    return 1 as Side
   } else {
-    return s + 1
+    return (s + 1) as Side
   }
 }
 
@@ -706,7 +706,6 @@ export class RoundN {
 
           events.only(side, new HandEvent(side, _.hand!))
         })
-
 
         this.phase = 'p'
       } break
