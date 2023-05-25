@@ -3,7 +3,7 @@ import { Card } from './hand_eval'
 export type Chips = number
 export type BetDescription = string
 
-function split_cards(nb: number, n: string): Card[] {
+export function split_cards(nb: number, n: string): Card[] {
   return [...Array(nb).keys()].map(_ => n.slice(_ * 2, _ * 2 + 2))
 }
 
@@ -148,10 +148,15 @@ export class Call {
 }
 
 export class Raise {
-  constructor(readonly match: Chips, readonly min_raise: Chips) {}
+
+  static cant_match = (match: Chips, min_raise: Chips, stack: Chips) => new Raise(match, min_raise, stack)
+  static cant_minraise = (match: Chips, min_raise: Chips, stack: Chips) => new Raise(match, min_raise, undefined, stack)
+
+  constructor(readonly match: Chips, readonly min_raise: Chips, readonly cant_match?: Chips, readonly cant_minraise?: Chips) {}
 
   get fen() {
-    return `raise-${this.match}-${this.min_raise}`
+    let cant = this.cant_match !== undefined ? `x${this.cant_match}-0` : (this.cant_minraise !== undefined ? `x${this.match}-${this.cant_minraise}` : '')
+    return `raise-${this.match}-${this.min_raise}${cant}`
   }
 }
 
@@ -602,7 +607,13 @@ export class RoundN {
       // cant raise if there is noone else and has more stack
       if (in_other_than_action_sides.length === 0 && action_stack > to_match + min_raise) {
       } else {
-        res.raise = new Raise(to_match, min_raise)
+        if (action_stack < to_match) {
+          res.raise = Raise.cant_match(to_match, min_raise, action_stack)
+        } else if (action_stack - to_match < min_raise) {
+          res.raise = Raise.cant_minraise(to_match, min_raise, action_stack - to_match)
+        } else {
+          res.raise = new Raise(to_match, min_raise)
+        }
       }
 
       return res

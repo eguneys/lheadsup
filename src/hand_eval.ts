@@ -65,6 +65,50 @@ export class HandRank {
              public flush?: [Card, Card, Card, Card, Card],
              public sflush?: Card) {}
 
+  get rank_name() {
+    if (this.quad) {
+      return 'quad'
+    } else if (this.high) {
+      return 'high'
+    } else if (this.pair) {
+      return 'pair'
+    } else if (this.pair2) {
+      return 'pair2'
+    } else if (this.set) {
+      return 'set'
+    } else if (this.full) {
+      return 'full'
+    } else if (this.straight) {
+      return 'straight'
+    } else if (this.flush) {
+      return 'flush'
+    } else if (this.sflush) {
+      return 'sflush'
+    }
+  }
+
+  get high_card() {
+    if (this.quad) {
+      return this.quad
+    } else if (this.high) {
+      return this.high[0]
+    } else if (this.pair) {
+      return this.pair[0]
+    } else if (this.pair2) {
+      return this.pair2[0]
+    } else if (this.set) {
+      return this.set[0]
+    } else if (this.full) {
+      return this.full[0]
+    } else if (this.straight) {
+      return this.straight
+    } else if (this.flush) {
+      return this.flush[0]
+    } else if (this.sflush) {
+      return this.sflush
+    }
+  }
+
   get fen() {
     if (this.quad) {
       return `quad ${this.quad}`

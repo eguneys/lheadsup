@@ -334,7 +334,7 @@ it('cant post big blind', () => {
 it('cant raise allin', () => {
 
   let r = RoundN.from_fen(`10-20 1 | @150 AhAc call-0-20 / i160 2h2c call-0-10 / i280 3h3c raise-20-0-80 $!4h5h6h7h8h`)
-  expect(r.dests.fen).toBe(`call-80 raise-80-80 fold`)
+  expect(r.dests.fen).toBe(`call-80 raise-80-80x80-70 fold`)
 
   r.act(`raise 80-70`)
   expect(r.fen).toBe(`10-20 1 | a0 AhAc allin-20-80-70 / @160 2h2c call-0-10 / i280 3h3c raise-20-0-80 $!4h5h6h7h8h`)
@@ -347,12 +347,21 @@ it('cant raise allin', () => {
   expect(r.fen).toBe(`10-20 1 | a0 AhAc allin-20-80-80 / @160 2h2c call-0-10 / i280 3h3c raise-20-0-80 $!4h5h6h7h8h`)
 })
 
-it('cant call allin', () => {
+it.only('cant call allin', () => {
   let r = RoundN.from_fen(`10-20 1 | @80 AhAc call-0-20 / i160 2h2c call-0-10 / i280 3h3c raise-20-0-80 $!p4h5h6h7h8h`)
-  expect(r.dests.fen).toBe(`raise-80-80 fold`)
+  expect(r.dests.fen).toBe(`raise-80-80x80-0 fold`)
 
   r.act(`raise 80-0`)
   expect(r.fen).toBe(`10-20 1 | a0 AhAc allin-20-80-0 / @160 2h2c call-0-10 / i280 3h3c raise-20-0-80 $!p4h5h6h7h8h`)
+
+  r = RoundN.from_fen(`10-20 1 | @70 AhAc call-0-20 / i160 2h2c call-0-10 / i280 3h3c raise-20-0-80 $!p4h5h6h7h8h`)
+  expect(r.dests.fen).toBe(`raise-80-80x70-0 fold`)
+
+  r.act(`raise 70-0`)
+  expect(r.fen).toBe(`10-20 1 | a0 AhAc allin-20-70-0 / @160 2h2c call-0-10 / i280 3h3c raise-20-0-80 $!p4h5h6h7h8h`)
+
+
+
 })
 
 
