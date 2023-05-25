@@ -19,10 +19,11 @@ export class Headsup {
     game.act(`sit 1-${stacks}`)
     game.act(`sit 2-${stacks}`)
 
-    return new Headsup(game)
+    return new Headsup([], game)
   }
 
   constructor(
+    readonly history: RoundN[],
     public game?: GameN,
     public round?: RoundN,
     public winner?: Side) {}
@@ -44,7 +45,10 @@ export class Headsup {
     let res = this.round!.act(act)
 
     if (this.round!.dests.fin) {
-
+      if (this.history.length === 10) {
+        this.history.shift()
+      }
+      this.history.push(this.round!)
       let lose_side = this.round!.stacks.findIndex(_ => _.stack === 0) + 1
       if (lose_side !== 0) {
         this.round = undefined
