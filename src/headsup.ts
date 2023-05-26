@@ -57,6 +57,7 @@ export class Headsup {
       } else {
         let shares = this.round!.stacks.map(_ => _.stack).join('-')
         this.round = undefined
+
         return this.game!.act(`share ${shares}`)
       }
     }

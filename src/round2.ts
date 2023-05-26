@@ -908,6 +908,7 @@ export class RoundN {
         
         let action_stack = action.stack
         let total_bet = to_match + to_raise
+        let total_bet_with_previous_for_allincase = (action.bet?.total ?? 0) + total_bet
 
         if (action_stack <= total_bet) {
           events.all(this.post_bet(action_side, 'allin', 
@@ -924,7 +925,7 @@ export class RoundN {
           let only_in_side = in_other_than_action_sides[0]
         // only player left has moved more than this players allin
         if (in_other_than_action_sides.length === 1 &&
-            (this.stacks[only_in_side - 1].bet?.total ?? 0) >= action_stack) {
+            (this.stacks[only_in_side - 1].bet?.total ?? 0) >= total_bet_with_previous_for_allincase) {
           events.all(this.change_state(in_action_next, 'p'))
         } else if (in_other_than_action_sides.length > 0) {
           events.all(this.change_state(in_action_next, '@'))

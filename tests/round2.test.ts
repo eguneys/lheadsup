@@ -1,6 +1,16 @@
 import { it, expect } from 'vitest'
 import { RoundN } from '../src'
 
+it('side pot calculation goes negative', () => {
+
+  let r = RoundN.from_fen(`85-170 1 | i50 6h4s raise-2550-170-170 / @340 QcKh raise-2380-170-170 $!pAh6dAs7cQd`)
+  expect(r.dests.fen).toBe(`call-170 raise-170-170 fold`)
+
+  r.act('raise 170-170')
+  expect(r.fen).toBe(`85-170 1 | @50 6h4s raise-2550-170-170 / a0 QcKh allin-2720-170-170 $!pAh6dAs7cQd`)
+  expect(r.dests.fen).toBe('raise-170-170x50-0 fold')
+})
+
 it('allin only match toraise = 0', () => {
   let r = RoundN.from_fen(`60-120 2 | @120 5d2h / i4800 5cKd raise-0-0-120 $ 960-12 !rTdQcJc5sKs`)
   expect(r.dests.fen).toBe(`raise-120-120x120-0 fold`)
