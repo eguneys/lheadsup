@@ -1,6 +1,11 @@
 import { it, expect } from 'vitest'
 import { RoundN } from '../src'
 
+it('cant raise an allin if can call', () => {
+  let r = RoundN.from_fen(`10-20 2 | a0 5h6d allin-10-10-2960 / @3000 bb-0-0-20 $!`)
+  expect(r.dests.fen).toBe('call-2960 fold')
+})
+
 it('went allin for equal to last actions bet', () => {
   let r = RoundN.from_fen(`85-170 2 | i3960 AdTd raise-680-170-170 / @170 4hKh call-0-850 $!p6dTc4c9c7d`)
   expect(r.dests.fen).toBe('raise-170-170x170-0 fold')

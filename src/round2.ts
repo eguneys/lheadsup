@@ -611,7 +611,12 @@ export class RoundN {
       let min_raise = Math.max(this.small_blind * 2, max_raise)
 
       // cant raise if there is noone else and has more stack
-      if (in_other_than_action_sides.length === 0 && action_stack > to_match + min_raise) {
+      if (in_other_than_action_sides.length === 0) {
+        if (action_stack < to_match) {
+          res.raise = Raise.cant_match(to_match, min_raise, action_stack)
+        } else if (action_stack === to_match) {
+          res.raise = Raise.cant_minraise(to_match, min_raise, 0)
+        }
       } else {
         if (action_stack < to_match) {
           res.raise = Raise.cant_match(to_match, min_raise, action_stack)
