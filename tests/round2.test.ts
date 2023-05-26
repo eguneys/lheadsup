@@ -1,6 +1,15 @@
 import { it, expect } from 'vitest'
 import { RoundN } from '../src'
 
+it('went allin for equal to last actions bet', () => {
+  let r = RoundN.from_fen(`85-170 2 | i3960 AdTd raise-680-170-170 / @170 4hKh call-0-850 $!p6dTc4c9c7d`)
+  expect(r.dests.fen).toBe('raise-170-170x170-0 fold')
+
+  r.act('raise 170-0')
+  expect(r.fen).toBe(`85-170 2 | p3960 AdTd raise-680-170-170 / a0 4hKh allin-850-170-0 $!p6dTc4c9c7d`)
+  expect(r.dests.fen).toBe('phase')
+})
+
 it('side pot calculation goes negative', () => {
 
   let r = RoundN.from_fen(`85-170 1 | i50 6h4s raise-2550-170-170 / @340 QcKh raise-2380-170-170 $!pAh6dAs7cQd`)
