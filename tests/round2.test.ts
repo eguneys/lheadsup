@@ -1,12 +1,24 @@
 import { it, expect } from 'vitest'
 import { RoundN } from '../src'
 
+it.only('allin only match toraise = 0', () => {
+  let r = RoundN.from_fen(`60-120 2 | @120 5d2h / i4800 5cKd raise-0-0-120 $ 960-12 !rTdQcJc5sKs`)
+  expect(r.dests.fen).toBe(`raise-120-120x120-0 fold`)
+
+  r.act('raise 120-0')
+
+  expect(r.fen).toBe(`60-120 2 | a0 5d2h allin-0-120-0 / p4800 5cKd raise-0-0-120 $ 960-12 !rTdQcJc5sKs`)
+  expect(r.dests.fen).toBe('phase')
+})
+
 it('sb allin', () => {
   let r = RoundN.from_fen(`160-320 1 | d5920 / d80 $!`)
   expect(r.dests.fen).toBe('deal-2')
 
   r.act('deal AhAc2h2c3h4h5h6h7h')
   expect(r.fen).toBe(`160-320 1 | p5840 AhAc call-0-80 / a0 2h2c allin-0-0-80 $!p3h4h5h6h7h`)
+
+
 })
 
 it('headsup bb is allin for less than sb', () => {

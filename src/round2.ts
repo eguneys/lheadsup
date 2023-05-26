@@ -924,7 +924,7 @@ export class RoundN {
           let only_in_side = in_other_than_action_sides[0]
         // only player left has moved more than this players allin
         if (in_other_than_action_sides.length === 1 &&
-            (this.stacks[only_in_side - 1].bet?.total ?? 0) > action_stack) {
+            (this.stacks[only_in_side - 1].bet?.total ?? 0) >= action_stack) {
           events.all(this.change_state(in_action_next, 'p'))
         } else if (in_other_than_action_sides.length > 0) {
           events.all(this.change_state(in_action_next, '@'))
