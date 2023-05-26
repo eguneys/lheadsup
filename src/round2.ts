@@ -674,7 +674,7 @@ export class RoundN {
         let small_blind_stack = this.stacks[small_blind_side - 1].stack
         let small_blind_all_in = small_blind_stack <= small_blind
 
-        let bb_allin_less_than_sb = big_blind_all_in && small_blind > big_blind_stack
+        let bb_allin_less_than_sb = big_blind_all_in && small_blind >= big_blind_stack
 
         if (small_blind_all_in && action_side === small_blind_side) {
           side_action_preflop = next_side(deal_sides, side_action_preflop)
