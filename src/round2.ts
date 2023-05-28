@@ -37,6 +37,27 @@ export type Side = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
 
 export class RoundNPov {
 
+  static from_fen = (fen: string) => {
+    let [rest, f_cards] = fen.split('!')
+    let [rest2, pot] = rest.split('$')
+    let [head, stacks] = rest2.split('|')
+
+    let [blinds, button] = head.split(' ')
+    let [small_blind] = blinds.split('-')
+
+    let middle = f_cards === '' ? undefined : (split_cards(f_cards.length / 2, f_cards)) as [Card, Card, Card, Card, Card]
+
+    let flop, turn, river
+    if (middle) {
+      flop = middle.slice(0, 3) as [Card, Card, Card]
+      turn = middle[3]
+      river = middle[4]
+    }
+
+    return new RoundNPov(num(small_blind), num(button) as Side, stacks.split('/').map(Stack.from_fen), pot === '' ? undefined : Pot.from_fen(pot), flop, turn, river)
+  }
+
+
   constructor(
     public small_blind: Chips,
     public button: Side,
@@ -50,6 +71,20 @@ export class RoundNPov {
   get total_pot() {
     let total_bets = sum(this.stacks.map(_ => _.bet?.total ?? 0))
     return total_bets + (this.pot?.total_pot ?? 0)
+  }
+
+  get middle() {
+    let res = []
+    if (this.flop) {
+      res.push(...this.flop)
+    }
+    if (this.turn) {
+      res.push(this.turn)
+    }
+    if (this.river) {
+      res.push(this.river)
+    }
+    return res
   }
 
   get fen() {
@@ -288,6 +323,15 @@ export class Dests {
     public raise?: Raise,
     public fin?: true,
     public win?: true) {}
+
+  get dealer_action() {
+    return this.deal ||
+      this.phase ||
+      this.showdown ||
+      this.share ||
+      this.fin ||
+      this.win
+  }
 
   get fen() {
     if (this.win) {

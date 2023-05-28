@@ -17,6 +17,9 @@ export const HandEvalFunctions = {
   sflush: (a: number) => Rank6 * 8 + a,
 }
 
+export const set_hand_rank_eval = HandEvalFunctions.set(5, 2, 2)
+export const max_hand_rank_eval = HandEvalFunctions.sflush(13)
+
 export type Card = string
 export class HandRank {
 

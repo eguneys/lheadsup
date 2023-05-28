@@ -44,11 +44,17 @@ export class Headsup {
   round_act(act: string) {
     let res = this.round!.act(act)
 
-    if (this.round!.dests.fin) {
+    let { dests } = this.round!
+
+    if (dests.phase || !dests.dealer_action) {
       if (this.history.length === 10) {
         this.history.shift()
       }
-      this.history.push(this.round!)
+      this.history.push(RoundN.from_fen(this.round!.fen))
+    }
+
+   
+    if (dests.fin) {
       let lose_side = this.round!.stacks.findIndex(_ => _.stack === 0) + 1
       if (lose_side !== 0) {
         this.round = undefined

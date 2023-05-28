@@ -1,6 +1,17 @@
 import { it, expect } from 'vitest'
 import { RoundN } from '../src'
 
+it('fold against allin', () => {
+  let r = RoundN.from_fen(`10-20 2 | @2960 3sKc raise-10-10-20 / a0 allin-20-20-2960 $!`)
+
+  expect(r.dests.fen).toBe('raise-2960-2960x2960-0 fold')
+  r.act('fold')
+  expect(r.fen).toBe(`10-20 2 | f2960 3sKc fold-40 / a0 allin-20-20-2960 $!`)
+  expect(r.dests.fen).toBe('phase')
+  r.act('phase')
+  expect(r.fen).toBe(`10-20 2 | f2960 3sKc / w0 $ 3040-2 !`)
+})
+
 it('cant raise an allin if can call', () => {
   let r = RoundN.from_fen(`10-20 2 | a0 5h6d allin-10-10-2960 / @3000 bb-0-0-20 $!`)
   expect(r.dests.fen).toBe('call-2960 fold')
