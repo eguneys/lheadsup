@@ -31,7 +31,7 @@ export class HandRank {
         return HandRank.high(rest as [Card, Card, Card, Card, Card])
       case 'pair':
         return HandRank.pair(rest as [Card, Card, Card, Card])
-      case 'pair2':
+      case 'ppair':
         return HandRank.pair2(rest as [Card, Card, Card])
       case 'set':
         return HandRank.set(rest as [Card, Card, Card])
@@ -76,7 +76,7 @@ export class HandRank {
     } else if (this.pair) {
       return 'pair'
     } else if (this.pair2) {
-      return 'pair2'
+      return 'ppair'
     } else if (this.set) {
       return 'set'
     } else if (this.full) {
@@ -126,7 +126,7 @@ export class HandRank {
       return `set ${this.set.join(' ')}`
     }
     if (this.pair2) {
-      return `pair2 ${this.pair2.join(' ')}`
+      return `ppair ${this.pair2.join(' ')}`
     }
     if (this.pair) {
       return `pair ${this.pair.join(' ')}`
@@ -229,7 +229,7 @@ export function rank5(hand: [Card, Card, Card, Card, Card]): HandRank {
     let [high4, count4] = histogram[3]
 
 
-    return HandRank.pair([high, high2, high3, high4].sort(sort_higher) as [Card, Card, Card, Card])
+    return HandRank.pair([high, ...[high2, high3, high4].sort(sort_higher)] as [Card, Card, Card, Card])
   }
 
   let is_flush = hand.every(_ => _[1] === hand[0][1])

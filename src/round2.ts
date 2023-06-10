@@ -3,8 +3,8 @@ import { Card, hand_rank } from './hand_eval'
 export type Chips = number
 export type BetDescription = string
 
-export function split_cards(nb: number, n: string): Card[] {
-  return [...Array(nb).keys()].map(_ => n.slice(_ * 2, _ * 2 + 2))
+export function split_cards(cards: string, nb = cards.length / 2): Card[] {
+  return [...Array(nb).keys()].map(_ => cards.slice(_ * 2, _ * 2 + 2))
 }
 
 const all_equal = <A>(arr: A[]) => arr.every( v => v === arr[0] )
@@ -45,7 +45,7 @@ export class RoundNPov {
     let [blinds, button] = head.split(' ')
     let [small_blind] = blinds.split('-')
 
-    let middle = f_cards === '' ? undefined : (split_cards(f_cards.length / 2, f_cards)) as [Card, Card, Card, Card, Card]
+    let middle = f_cards === '' ? undefined : (split_cards(f_cards)) as [Card, Card, Card, Card, Card]
 
     let flop, turn, river
     if (middle) {
@@ -247,7 +247,7 @@ export class Stack {
       hand = undefined
     }
 
-    return new Stack(state, num(stack), hand ? (split_cards(2, hand) as [Card, Card]) : undefined, bet ? Bet.from_fen(bet) : undefined)
+    return new Stack(state, num(stack), hand ? (split_cards(hand, 2) as [Card, Card]) : undefined, bet ? Bet.from_fen(bet) : undefined)
   }
 
   constructor(
@@ -462,7 +462,7 @@ export class RoundN {
     let [blinds, button] = head.split(' ')
     let [small_blind] = blinds.split('-')
 
-    let middle = f_cards === '' ? undefined : (split_cards(5, f_cards.slice(1)) as [Card, Card, Card, Card, Card])
+    let middle = f_cards === '' ? undefined : (split_cards(f_cards.slice(1), 5) as [Card, Card, Card, Card, Card])
     let phase = f_cards === '' ? undefined : f_cards[0]
 
     return new RoundN(num(small_blind), num(button) as Side, stacks.split('/').map(Stack.from_fen), pot === '' ? undefined : Pot.from_fen(pot), middle, phase)
@@ -772,11 +772,11 @@ export class RoundN {
         events.all(sb_events)
         events.all(bb_events)
 
-        this.middle = split_cards(5, args.slice(nb * 4, nb * 4 + 10)) as [Card, Card, Card, Card, Card]
+        this.middle = split_cards(args.slice(nb * 4, nb * 4 + 10), 5) as [Card, Card, Card, Card, Card]
 
         deal_sides.forEach((side, i) => {
           let _ = this.stacks[side - 1]
-          _.hand = split_cards(2, args.slice(i * 4)) as [Card, Card]
+          _.hand = split_cards(args.slice(i * 4), 2) as [Card, Card]
 
           events.only(side, new HandEvent(side, _.hand!))
         })

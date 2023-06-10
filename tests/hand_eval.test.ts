@@ -1,6 +1,14 @@
 import { it, expect } from 'vitest'
 import { Hand, HandRank, hand_rank, rank_eval } from '../src'
 import { HandEvalFunctions } from '../src'
+import { split_cards } from '../src'
+
+it('finds pair cards', () => {
+  let cards = split_cards(`Tc6cQsAh9hTd4d`)
+
+  expect(hand_rank(cards).pair).toStrictEqual(['T', 'A', 'Q', '9'])
+})
+
 
 const { high, quad, sflush, flush, straight, pair, pair2, set, full } = HandEvalFunctions
 
@@ -25,7 +33,7 @@ it('evaluate hand to rank', () => {
   expect(fen_hand_rank(`Qd Qh Qc Qs 5d 2c 8s`)).toBe(`quad Q`)
   expect(fen_hand_rank(`Kc Kh Ks Jd Jc 6h 7s`)).toBe(`full K J`)
   expect(fen_hand_rank(`7c 7s 7h Kd Jh 8s 3d`)).toBe(`set 7 K J`)
-  expect(fen_hand_rank(`Qh Qd 8s 8d 6c 4s 2h`)).toBe(`pair2 Q 8 6`)
+  expect(fen_hand_rank(`Qh Qd 8s 8d 6c 4s 2h`)).toBe(`ppair Q 8 6`)
   expect(fen_hand_rank(`8h 9h Th Jh Qh 7d 2c`)).toBe(`sflush Q`)
 
 
@@ -48,9 +56,9 @@ it('evaluate rank to number', () => {
   expect(fen_rank_eval('pair K 9 7 6')).toBe(pair(K, 9, 7, 6))
   expect(fen_rank_eval('pair A J 3 2')).toBe(pair(A, J, 3, 2))
   expect(fen_rank_eval('pair 2 A K J')).toBe(pair(2, A, K, J))
-  expect(fen_rank_eval(`pair2 Q 8 6`)).toBe(pair2(Q, 8, 6))
-  expect(fen_rank_eval(`pair2 A 3 2`)).toBe(pair2(A, 3, 2))
-  expect(fen_rank_eval(`pair2 3 A 9`)).toBe(pair2(3, A, 9))
+  expect(fen_rank_eval(`ppair Q 8 6`)).toBe(pair2(Q, 8, 6))
+  expect(fen_rank_eval(`ppair A 3 2`)).toBe(pair2(A, 3, 2))
+  expect(fen_rank_eval(`ppair 3 A 9`)).toBe(pair2(3, A, 9))
   expect(fen_rank_eval(`set 2 K J`)).toBe(set(2, K, J))
   expect(fen_rank_eval(`set T K J`)).toBe(set(T, K, J))
   expect(fen_rank_eval(`set A K J`)).toBe(set(A, K, J))
