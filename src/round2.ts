@@ -149,6 +149,19 @@ export class PotShare {
   static back(n: Side, chips: Chips) { return new PotShare(undefined, [n, chips]) }
   static swin(n: Side, chips: Chips) { return new PotShare(undefined, undefined, [n, chips]) }
 
+
+  get clone() {
+    let win = this.win?.slice(0) as [Side, Chips] | undefined
+    let back = this.back?.slice(0) as [Side, Chips] | undefined
+    let swin = this.swin?.slice(0) as [Side, Chips] | undefined
+
+    return new PotShare(
+      win,
+      back,
+      swin)
+  }
+
+
   constructor(readonly win?: [Side, Chips], readonly back?: [Side, Chips], readonly swin?: [Side, Chips]) {}
 
 
@@ -210,6 +223,17 @@ export class Bet {
     return new Bet(desc, num(previous), match ? num(match) : undefined, raise ? num(raise) : undefined)
   }
 
+  get clone() {
+
+    let { desc, previous, match, raise } = this
+
+    return new Bet(
+      desc,
+      previous,
+      match,
+      raise)
+  }
+
   constructor(readonly desc: BetDescription,
               readonly previous: Chips,
               readonly match?: Chips,
@@ -248,6 +272,18 @@ export class Stack {
     }
 
     return new Stack(state, num(stack), hand ? (split_cards(hand, 2) as [Card, Card]) : undefined, bet ? Bet.from_fen(bet) : undefined)
+  }
+
+  get clone() {
+    let { state, stack } = this
+    let hand = this.hand?.slice(0) as [Card, Card] | undefined
+    let bet = this.bet?.clone
+
+    return new Stack(
+      state,
+      stack,
+      hand,
+      bet)
   }
 
   constructor(
@@ -386,6 +422,17 @@ export class Pot {
 
   static empty = () => new Pot(0, [])
 
+  get clone(): Pot {
+    let { chips } = this
+    let sides = this.sides.slice(0)
+    let side_pots: Pot[] | undefined = this.side_pots?.map(_ => _.clone)
+
+    return new Pot(
+      chips,
+      sides,
+      side_pots)
+  }
+
   constructor(
     public chips: Chips,
     public sides: Side[],
@@ -466,6 +513,25 @@ export class RoundN {
     let phase = f_cards === '' ? undefined : f_cards[0]
 
     return new RoundN(num(small_blind), num(button) as Side, stacks.split('/').map(Stack.from_fen), pot === '' ? undefined : Pot.from_fen(pot), middle, phase)
+  }
+
+  get clone() {
+
+    let { small_blind, button, phase } = this
+
+    let stacks = this.stacks.map(_ => _.clone)
+    let pot = this.pot?.clone
+    let middle = this.middle?.slice(0) as [Card, Card, Card, Card, Card]
+    let shares = this.shares?.map(_ => _.clone)
+
+    return new RoundN(
+      small_blind,
+      button,
+      stacks,
+      pot,
+      middle,
+      phase,
+      shares)
   }
 
   constructor(

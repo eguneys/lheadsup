@@ -25,8 +25,12 @@ export class Headsup {
   constructor(
     readonly history: RoundN[],
     public game?: GameN,
-    public round?: RoundN,
+    public _round?: RoundN,
     public winner?: Side) {}
+
+  get round() {
+    return this._round?.clone
+  }
 
   get game_dests() {
     let { dests } = this.game!
@@ -38,31 +42,31 @@ export class Headsup {
   }
 
   get round_dests() {
-    return this.round?.dests
+    return this._round?.dests
   }
 
   round_act(act: string) {
-    let res = this.round!.act(act)
+    let res = this._round!.act(act)
 
-    let { dests } = this.round!
+    let { dests } = this._round!
 
     if (dests.phase || !dests.dealer_action) {
       if (this.history.length === 10) {
         this.history.shift()
       }
-      this.history.push(RoundN.from_fen(this.round!.fen))
+      this.history.push(RoundN.from_fen(this._round!.fen))
     }
 
    
     if (dests.fin) {
-      let lose_side = this.round!.stacks.findIndex(_ => _.stack === 0) + 1
+      let lose_side = this._round!.stacks.findIndex(_ => _.stack === 0) + 1
       if (lose_side !== 0) {
-        this.round = undefined
+        this._round = undefined
         this.game = undefined
         this.winner = next(2, lose_side as Side)
       } else {
-        let shares = this.round!.stacks.map(_ => _.stack).join('-')
-        this.round = undefined
+        let shares = this._round!.stacks.map(_ => _.stack).join('-')
+        this._round = undefined
 
         return this.game!.act(`share ${shares}`)
       }
@@ -77,7 +81,7 @@ export class Headsup {
 
     switch (cmd) {
       case 'deal': {
-        this.round = make_round_from_game(this.game!)
+        this._round = make_round_from_game(this.game!)
         return this.game!.act(act)
       }
     }
