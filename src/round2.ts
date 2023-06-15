@@ -165,8 +165,8 @@ export class PotShare {
 
   static from_fen = (fen: string) => {
     let [win, s_side, s_chips] = fen.split('-')
-    let side = num(s_side)
-    let chips = num(s_chips)
+    let side = num(s_side) as Side
+    let chips = num(s_chips) as Chips
     if (win === 'win') {
       return PotShare.win(side, chips)
     }
