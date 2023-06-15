@@ -38,7 +38,8 @@ export type Side = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
 export class RoundNPov {
 
   static from_fen = (fen: string) => {
-    let [rest, f_cards] = fen.split('!')
+    let [rrest, shares] = fen.split('shares')
+    let [rest, f_cards] = rrest.trim().split('!')
     let [rest2, pot] = rest.split('$')
     let [head, stacks] = rest2.split('|')
 
@@ -54,7 +55,7 @@ export class RoundNPov {
       river = middle[4]
     }
 
-    return new RoundNPov(num(small_blind), num(button) as Side, stacks.split('/').map(Stack.from_fen), pot === '' ? undefined : Pot.from_fen(pot), flop, turn, river)
+    return new RoundNPov(num(small_blind), num(button) as Side, stacks.split('/').map(Stack.from_fen), pot === '' ? undefined : Pot.from_fen(pot), flop, turn, river, shares?.trim().split(' ').map(_ => PotShare.from_fen(_)))
   }
 
 
@@ -150,6 +151,7 @@ export class PotShare {
   static swin(n: Side, chips: Chips) { return new PotShare(undefined, undefined, [n, chips]) }
 
 
+
   get clone() {
     let win = this.win?.slice(0) as [Side, Chips] | undefined
     let back = this.back?.slice(0) as [Side, Chips] | undefined
@@ -161,6 +163,18 @@ export class PotShare {
       swin)
   }
 
+  static from_fen = (fen: string) => {
+    let [win, s_side, s_chips] = fen.split('-')
+    let side = num(s_side)
+    let chips = num(s_chips)
+    if (win === 'win') {
+      return PotShare.win(side, chips)
+    }
+    if (win === 'swin') {
+      return PotShare.swin(side, chips)
+    }
+    return PotShare.back(side, chips)
+  }
 
   constructor(readonly win?: [Side, Chips], readonly back?: [Side, Chips], readonly swin?: [Side, Chips]) {}
 

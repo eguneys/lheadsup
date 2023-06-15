@@ -1,5 +1,25 @@
 import { it, expect } from 'vitest'
-import { RoundN } from '../src'
+import { RoundN, RoundNPov } from '../src'
+
+it('reads shares from fen', () => {
+  let fens = [
+    '10-20 1 | d3000 / d3000 $!',
+    '10-20 1 | i2980 3cQs bb-0-0-20 / @2990 sb-0-0-10 $!',
+    '10-20 1 | @2980 3cQs bb-0-0-20 / i2960 raise-10-10-20 $!',
+    '10-20 1 | i2840 3cQs raise-20-20-120 / @2960 raise-10-10-20 $!',
+    '10-20 1 | @2840 3cQs raise-20-20-120 / i2720 raise-40-120-120 $!',
+    '10-20 1 | i1840 3cQs raise-160-120-880 / @2720 raise-40-120-120 $!',
+    '10-20 1 | @1840 3cQs raise-160-120-880 / i960 raise-280-880-880 $!',
+    '10-20 1 | f1840 3cQs fold-1160 / p960 raise-280-880-880 $!',
+    '10-20 1 | f1840 3cQs / w960 $ 3200-2 !',
+    '10-20 2 | s0 Jc2c / s2240 Kc9c $ 320-2side 3440-21 ! shares back-2-320 swin-2-3440'
+  ]
+
+  fens.forEach(fen => {
+    let r = RoundNPov.from_fen(fen)
+    expect(r.fen).toBe(fen)
+  })
+})
 
 it('fold against allin', () => {
   let r = RoundN.from_fen(`10-20 2 | @2960 3sKc raise-10-10-20 / a0 allin-20-20-2960 $!`)
