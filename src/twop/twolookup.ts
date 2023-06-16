@@ -1,6 +1,6 @@
 import fs from 'fs'
 
-let HR: Int32Array
+let HR: Buffer
 
 export function lookup(cards: number[]) {
 
@@ -12,6 +12,11 @@ export function lookup(cards: number[]) {
   for (let i = 1; i < cards.length; i++) {
     p = HR.readInt32LE((p + cards[i]) * 4)
   }
+
+  if (cards.length === 5 || cards.length === 6) {
+    return HR.readInt32LE(p * 4)
+  }
+
   return p
 }
 
