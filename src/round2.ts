@@ -1,4 +1,5 @@
-import { Card, hand_rank } from './hand_eval'
+import { hand_rank } from './hand_rank'
+import { Card } from './cards'
 
 export type Chips = number
 export type BetDescription = string

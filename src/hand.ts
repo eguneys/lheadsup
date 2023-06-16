@@ -1,5 +1,6 @@
 import { Side, next } from './round2'
-import { Card, HandRank, hand_rank } from './hand_eval'
+import { HandRank } from './hand_rank'
+import { Card } from './cards'
 
 const straight_highs: Record<string, string> = { 'A': 'AKQJT', '5': '5432A', '6': '65432', '7': '76543', '8': '87654', '9': '98765', 'T': 'T9876', 'J': 'JT987', 'Q': 'QJT98', 'K': 'KQJT9' }
 

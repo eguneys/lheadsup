@@ -6,7 +6,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "twomain": "esbuild ./src/gen_two_main.ts --platform=node --format=esm --bundle --outdir=dist && tsc --emitDeclarationOnly",
+    "gen_tpt": "./gen_tpt.sh",
     "build": "rimraf dist && esbuild ./src/index.ts --platform=node --format=esm --bundle --outdir=dist && tsc --emitDeclarationOnly",
     "lint:watch": "tsc --noEmit --watch",
     "test": "vitest --run",

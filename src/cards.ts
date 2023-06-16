@@ -1,5 +1,5 @@
-import { Card } from './hand_eval'
 
+export type Card = string
 
 export const suits = 'schd'.split('')
 export const ranks = 'A23456789TJQK'.split('')
