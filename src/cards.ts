@@ -1,4 +1,4 @@
-
+export type Rank = string
 export type Card = string
 
 export const suits = 'schd'.split('')
@@ -12,6 +12,10 @@ export function make_deal(nb: number) {
   return deck.slice(0, 5 + nb * 2).join('')
 }
 
+
+export function split_cards(cards: string, nb = cards.length / 2): Card[] {
+  return [...Array(nb).keys()].map(_ => cards.slice(_ * 2, _ * 2 + 2))
+}
 
 // https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
 export function shuffle<A>(array: A[]) {

@@ -1,12 +1,9 @@
 import { hand_rank } from './hand_rank'
-import { Card } from './cards'
+import { Card, split_cards } from './cards'
 
 export type Chips = number
 export type BetDescription = string
 
-export function split_cards(cards: string, nb = cards.length / 2): Card[] {
-  return [...Array(nb).keys()].map(_ => cards.slice(_ * 2, _ * 2 + 2))
-}
 
 const all_equal = <A>(arr: A[]) => arr.every( v => v === arr[0] )
 

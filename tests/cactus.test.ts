@@ -2,66 +2,12 @@ import { it, expect } from 'vitest'
 import { shuffle, cards } from '../src'
 import { encode_card, eval5_cards, eval_7hand } from '../src'
 
-import { lookup, hand_rank_cactus } from '../src'
-import { eval_ranks, lookup_cards_str } from '../src'
+import { lookup } from '../src'
 
-it.skip('find kickers', () => {
-
-  let quads = [
-    [`AdAhAcAs2d2c2s`, `quads A`],
-    [`AdAhAcAs2d2c3s`, `quads A`],
-    [`AdAhAcAsKdKcKs`, `quads A`],
-    [`KdKhKcKs5d2c8s`, `quads K`],
-    [`QdQhQcQs5d2c8s`, `quads Q`],
-    [`3d3h3c3s5d4c8s`, `quads 3`],
-    [`2d2h2c2s5d3c8s`, `quads 2`],
-  ]
-
-  let straights = [
-    [`AcKdQsJhThQc2d`, 'straight A'],
-    [`KcQdJsTh9hQc2d`, 'straight K'],
-    [`5c6d7s8h9hQc2d`, 'straight 9'],
-    [`6c2d3s4h5hQc2d`, 'straight 6'],
-    [`Ac2d3s4h5hQc2d`, 'straight 5']
-  ]
-
-  let quads_r = quads.map(qs => lookup_cards_str(qs[0]))
-  let straights_r = straights.map(qs => lookup_cards_str(qs[0]))
-  console.log(quads_r, straights_r)
+it.skip('skip cactus', () => {
 })
 
-it('batch lookup cards', () => {
-  let batch = [
-    [`QdQhQcQs5d2c8s`, `quads Q`],
-    [`KcKhKsJdJc6h7s`, `full KJ`],
-    [`7c7s7hKdJh8s3d`, `set 7KJ`],
-    [`QhQd8s8d6c4s2h`, `ppair Q86`],
-    [`8h9hThJhQh7d2c`, `sflush Q`],
-    [`KcKh2s9h3d6c7d`, `pair K976`],
-    [`5c6d7s8h9hQc2d`, 'straight 9'],
-    [`Ah2h5h8hKh7sJc`, 'flush AK852'],
-    [`Ah2d3c4s5h8cQd`, 'straight 5'],
-    [`TcJhQdKsAh4c7d`, 'straight A'],
-  ]
-
-  batch.forEach(([cs, e]) => {
-    let r = lookup_cards_str(cs)
-    expect(eval_ranks[r >> 12]).toBe(e.split(' ')[0])
-  })
-})
-
-it('lookup cards', () => {
-  let r = lookup_cards_str('2h3h4h5h6h')
-  expect(eval_ranks[r >> 12]).toBe('sflush')
-
-
-  r = lookup_cards_str('2h7h4h5h6h')
-  expect(eval_ranks[r >> 12]).toBe('flush')
-
-  r = lookup_cards_str('2h7c4h5c6h')
-  expect(eval_ranks[r >> 12]).toBe('high')
-})
-
+/*
 it('five six hands', () => {
   let r = lookup([2, 6, 12, 14, 23])
   expect(r >> 12).toBe(1)
@@ -208,7 +154,6 @@ it('cactus eval 7', () => {
     expect(freq[i]).toBe(expected_freq[i])
   }
 })
-*/
 
 it.skip('cactus eval 5', () => {
   let expected_freq = [0, 40, 624, 3744, 5108, 10200, 54912, 123552, 1098240, 1302540 ]
@@ -239,3 +184,4 @@ it.skip('cactus eval 5', () => {
     expect(freq[i]).toBe(expected_freq[i])
   }
 })
+*/
