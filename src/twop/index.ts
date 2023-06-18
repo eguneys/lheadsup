@@ -1,3 +1,3 @@
 export * from './cactus'
-export * from './twolookup'
+export * from './lookup'
 

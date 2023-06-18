@@ -263,8 +263,9 @@ int DoEval(i64 IDin)
 }
 
 
-int main(int argc, char* argv[])
+void gen_HR()
 {
+
 	int IDslot, card = 0, count = 0;
 	i64 ID;
 
@@ -390,13 +391,24 @@ int main(int argc, char* argv[])
 
 	// and display the clock results
 	printf("\nHighPrecision clocks per lookup = %lf\n", (double)timer/CLOCKS_PER_SEC) ;
+}
 
+int main(int argc, char* argv[]) {
 	// output the array now that I have it!!
-	FILE * fout = fopen("data/HandRanks.dat", "wb");
+
+  if (argc < 2) {
+    printf("Usage: ./gen_tpt filename\n");
+    exit(-1);
+  }
+
+	FILE * fout = fopen(argv[1], "wb");
 	if (!fout) {
 		printf("Problem creating the Output File!\n");
 		return 1;
 	}
+
+  gen_HR();
+
 	fwrite(HR, sizeof(HR), 1, fout);  // big write, but quick
 
 	fclose(fout);
