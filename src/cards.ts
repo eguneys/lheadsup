@@ -6,10 +6,14 @@ export const ranks = 'A23456789TJQK'.split('')
 
 export const cards = suits.flatMap(suit => ranks.map(rank => `${rank}${suit}`))
 
-export function make_deal(nb: number) {
+export function make_cards(nb: number) {
   let deck = shuffle(cards.slice(0))
 
-  return deck.slice(0, 5 + nb * 2).join('')
+  return deck.slice(0, nb).join('')
+}
+
+export function make_deal(nb: number) {
+  return make_cards(5 + nb * 2)
 }
 
 
