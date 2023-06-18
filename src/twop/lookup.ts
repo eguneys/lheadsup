@@ -1,5 +1,4 @@
 import fs from 'fs'
-import { execSync } from 'child_process'
 
 let HR: Buffer
 
@@ -23,7 +22,7 @@ export function lookup(cards: number[]) {
 
 function read_hr() {
 
-  let buffer = fs.readFileSync(__dirname + 'data/HandRanks.dat')
+  let buffer = fs.readFileSync('data/HandRanks.dat')
 
   return buffer
 }
