@@ -2,6 +2,8 @@
 
 FILE=${1:-data/HandRanks.dat}
 
+echo "Generating HandRanks.dat file."
+
 if [ -f $FILE ]; then
   echo "$FILE exists."
 else 
